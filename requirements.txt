@@ -1,0 +1,46 @@
+backports==1.0
+backports.ssl-match-hostname==3.4.0.2
+certifi==14.5.14
+cvxopt==1.1.7
+Cython==0.21.2
+## !! Could not determine repository location
+deap==1.0.1
+decorator==3.4.2
+docutils==0.12
+ipython==2.3.1
+Jinja2==2.7.3
+MarkupSafe==0.23
+## !! Could not determine repository location
+matplotlib==1.4.2
+## !! Could not determine repository location
+mock==1.0.1
+## !! Could not determine repository location
+mpldatacursor==0.5
+networkx==1.9.1
+## !! Could not determine repository location
+nose==1.3.4
+## !! Could not determine repository location
+numpy==1.9.1
+psycopg2==2.6
+Pygments==2.0.1
+## !! Could not determine repository location
+pyparsing==2.0.3
+## !! Could not determine repository location
+python-dateutil==2.4.0
+## !! Could not determine repository location
+pytz==2014.10
+pyzmq==14.4.1
+requests==2.5.1
+roman==2.0.0
+ScientificPython==2.9.4
+## !! Could not determine repository location
+scikit-learn==0.15.2
+## !! Could not determine repository location
+scipy==0.15.1
+## !! Could not determine repository location
+six==1.9.0
+Sphinx==1.2.3
+tornado==4.0.2
+utm==0.4.0
+## !! Could not determine repository location
+virtualenv==12.0.7
