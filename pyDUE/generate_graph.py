@@ -141,12 +141,27 @@ def braess_paradox():
     graph.add_node((1,2))
     graph.add_node((3,2))
     graph.add_node((2,1))
+    ## links
+    #graph.add_link(1, 2, 1, delayfunc=g.create_delayfunc('Polynomial',(2.0,  1.0, [2.0])))
+    #graph.add_link(1, 3, 1, delayfunc=g.create_delayfunc('Polynomial',(10.0, 1.0, [1.0])))
+    #graph.add_link(2, 3, 1, delayfunc=g.create_delayfunc('Polynomial',(2.0,  1.0, [2.0])))
+    #graph.add_link(2, 4, 1, delayfunc=g.create_delayfunc('Polynomial',(10.0, 1.0, [1.0])))
+    #graph.add_link(3, 4, 1, delayfunc=g.create_delayfunc('Polynomial',(2.0,  1.0, [2.0])))
     # links
-    graph.add_link(1, 2, 1, delayfunc=g.create_delayfunc('Polynomial',(2.0,  1.0, [2.0])))
-    graph.add_link(1, 3, 1, delayfunc=g.create_delayfunc('Polynomial',(10.0, 1.0, [1.0])))
-    graph.add_link(2, 3, 1, delayfunc=g.create_delayfunc('Polynomial',(2.0,  1.0, [2.0])))
-    graph.add_link(2, 4, 1, delayfunc=g.create_delayfunc('Polynomial',(10.0, 1.0, [1.0])))
-    graph.add_link(3, 4, 1, delayfunc=g.create_delayfunc('Polynomial',(2.0,  1.0, [2.0])))
+    links=[]
+    startnodes = [1,1,2,2,3]
+    endnodes = [2,3,3,4,4]
+    lengths = [2., 10., 2., 10., 2.]
+    freespeed = 1.
+    caps = [1., 10., 1., 10., 1.]
+    theta = matrix([1.0, 0.0, 0.0, 0.0])
+    degree = len(theta)
+    for startnode, endnode, length, cap in zip(startnodes, endnodes, lengths, caps):
+        ff_d = length/freespeed
+        slope=1./cap
+        coef = [ff_d*a*b for a,b in zip(theta, np.power(slope, range(1,degree+1)))]
+        links.append((startnode, endnode, 1, ff_d, (ff_d, slope, coef), cap, length,freespeed))
+    graph.add_links_from_list(links, 'Polynomial')
     # OD pairs
     graph.add_od(1, 4, 10.0)
 
