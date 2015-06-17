@@ -50,9 +50,9 @@ def retrieve_bridge_db(cur_gis, cur_nbi):
     return np.asarray(bridge_db, dtype=object)
 
 def cs2reliable(cs):
-    #beta = (4.7-3.0)/(8-2)*(cs-8)+4.7
+    beta = (4.7-3.0)/(8-2)*(cs-8)+4.7
     #beta = (3.0-1.0)/(8-2)*(cs-8)+3.0
-    beta = (4.7-0.0)/(8-2)*(cs-8)+4.7
+    #beta = (4.7-0.0)/(8-2)*(cs-8)+4.7
     return beta
 
 def condition_distribution(year, cs0_data, pmatrix):
