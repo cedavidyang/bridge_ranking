@@ -71,7 +71,7 @@ def create_networkx_graph(graph):
     G.add_nodes_from(range(1,graph.numnodes))
     G.add_edges_from([(key[0],key[1]) for key in graph.links.keys()])
     i = 0
-    for edge in G.edges(): G.graph['indedges'][edge] = i; i+=1
+    for edge in G.edges(): G.graph['indedges'][edge] = i; i+=1 # edge index
     return G
 
 
