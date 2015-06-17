@@ -364,6 +364,10 @@ class PolyDelay:
     def compute_delay(self, flow):
         """Compute delay"""
         return self.ffdelay + np.dot(self.coef, np.power(flow, range(1,self.degree+1)))
+
+    def compute_obj(self, flow):
+        """Compute objective func of minimization"""
+        return self.ffdelay*flow + np.dot(self.coef, np.power(flow, range(2,self.degree+2))/np.arange(2.,self.degree+2.))
     
     
 class HyperDelay:
