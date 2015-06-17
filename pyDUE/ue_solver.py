@@ -9,6 +9,10 @@ from cvxopt import matrix, spmatrix, solvers, spdiag, mul, div, sparse
 import rank_nullspace as rn
 from util import find_basis
 from kktsolver import get_kktsolver
+import networkx as nx
+import itertools
+import scipy.optimize as op
+from util import create_networkx_graph
 import logging
 if logging.getLogger().getEffectiveLevel() >= logging.DEBUG:
     solvers.options['show_progress'] = False
@@ -220,3 +224,108 @@ def solver(graph=None, update=False, full=False, data=None, SO=False):
     
     if full: return linkflows, x    
     return linkflows
+
+
+def solver_fw(graph=None, update=False, full=False, data=None, SO=False, e=1e-4, niter=1e4, verbose=False):
+    """Frank-Wolfe algorithm for UE according to Patriksson (1994)"""
+    if data is None: data = get_data(graph)
+    Aeq, beq, ffdelays, pm, type = data
+    nlink = len(ffdelays)
+    ncol = Aeq.size[1]
+    nrow = Aeq.size[0]
+    npair = ncol/nlink
+    nnode = nrow/npair
+    G = nx.DiGraph()
+    G.add_nodes_from(graph.nodes.keys())
+    G.add_edges_from([(key[0],key[1]) for key in graph.links.keys()])
+    for u,v in G.edges():
+        link = graph.links[(u,v,1)]
+        G[u][v]['obj'] = 0
+        G[u][v]['cost'] = link.ffdelay
+    # Step 0 (Initialization) Let f0 be a feasible solution to [TAP], LBD=0,
+    # e>0, k=0 (using Dijkstra's shortest path algorithm in networkx
+    LBD = 0.
+    f = matrix(0.0,(ncol,1))
+    iod = 0
+    for OD in graph.ODs.itervalues():
+        nodes_on_path = nx.dijkstra_path(G, OD.o, OD.d, weight='cost')
+        for indx in xrange(len(nodes_on_path)-1):
+            u = nodes_on_path[indx]
+            v = nodes_on_path[indx+1]
+            indx=iod*nlink+graph.indlinks[(u,v,1)]
+            f[indx,0] = OD.flow
+        iod += 1
+        #f += [l.flow for l in graph.links.itervalues()]
+    def Tf_func(f):
+        linkflows = matrix(0.0, (nlink,1))
+        for k in xrange(npair): linkflows += f[k*nlink:(k+1)*nlink]
+        return sum([graph.links[link_key].delayfunc.compute_obj(linkflows[link_indx]) for link_key, link_indx
+                in graph.indlinks.iteritems()])
+    def dTf_func(f):
+        linkflows = matrix(0.0, (nlink,1))
+        for k in xrange(npair): linkflows += f[k*nlink:(k+1)*nlink]
+        dTf = nlink*[0.0]
+        for link_key, link_indx in graph.indlinks.iteritems():
+            dTfi = graph.links[link_key].delayfunc.compute_delay(linkflows[link_indx]) 
+            dTf[link_indx] = dTfi
+        dTf = matrix(npair*dTf)
+        return dTf
+    for k in xrange(int(niter)):
+        # Step 1 (Search direction generation) LP problem
+        Tf = Tf_func(f)
+        dTf = dTf_func(f)
+        G = spmatrix(-1.0, range(ncol), range(ncol))
+        h = matrix(ncol*[0.0])
+        y = solvers.lp(dTf, G, h, Aeq, beq)['x']
+        p = y - f
+        # Step 2 (Convergence check)
+        def T_linear(x):
+            res = Tf + dTf.T*(x-f)
+            return res[0,0]
+        LBD = np.maximum(LBD, T_linear(y))
+        if verbose:
+            print 'Iter #{}a: Tf={}, T_linear={}, LBD={}, e={}'.format(k+1, Tf, T_linear(y), LBD, e)
+        if (Tf - LBD) / LBD < e:
+            break
+        # Step 3 (Line search)
+        #def T(step):
+            #obj, jac = Tf_func(f+step*p), dTf_func(f+step*p).T*p
+            #return [obj, np.array(jac[0])]
+        #step = op.minimize(T, x0=0.5, jac=True, bounds=[(0.,1.)]).x
+        def T(step):
+            return  Tf_func(f+step*p)
+        step = op.minimize(T, 0.5, bounds=[(0., 1.)]).x[0]
+        #step = 1./(k+1)
+        # Step 4 (Update)
+        f += step*p
+        f = matrix(f, tc='d')
+        # Step 5 (Convergence check)
+        if verbose:
+            print 'Iter #{}b: Tf={}, step={}, LBD={}, e={}'.format(k+1, Tf_func(f), step, LBD, e)
+        if (Tf_func(f) - LBD) / LBD < e: break
+
+    linkflows = matrix(0.0, (nlink,1))
+    for k in range(npair): linkflows += f[k*nlink:(k+1)*nlink]
+
+    if update:
+        logging.info('Update link flows, delays in Graph.'); graph.update_linkflows_linkdelays(linkflows)
+        logging.info('Update path delays in Graph.'); graph.update_pathdelays()
+
+    return linkflows
+
+if __name__ == '__main__':
+    from generate_graph import braess_paradox
+    import time
+    import datetime
+    graph = braess_paradox()
+    num = 1000
+    starttime = time.time()
+    for i in xrange(num):
+        f1 = solver(graph)
+    delta_time = time.time() - starttime
+    print 'cvxopt: {} loops, total time {}'.format(num, datetime.timedelta(seconds=delta_time))
+    starttime = time.time()
+    for i in xrange(num):
+        f2 = solver_fw(graph, verbose=False, e=1e-4, niter=100)
+    delta_time = time.time() - starttime
+    print 'fw: {} loops, total time {}'.format(num, datetime.timedelta(seconds=delta_time))
