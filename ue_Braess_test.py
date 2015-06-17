@@ -4,9 +4,9 @@ Created on May 13, 2015
 @author: cedavidyang
 '''
 import numpy as np
-import ue_solver as ue
-import draw_graph as d
-from generate_graph import braess_paradox
+import pyDUE.ue_solver as ue
+import pyDUE.draw_graph as d
+from pyDUE.generate_graph import braess_paradox
 from cvxopt import matrix, mul
 
 def braess():
