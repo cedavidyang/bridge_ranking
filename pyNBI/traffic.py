@@ -51,7 +51,7 @@ def retrieve_bridge_db(cur_gis, cur_nbi):
 
 def cs2reliable(cs):
     beta = (4.7-3.0)/(8-2)*(cs-8)+4.7
-    #beta = (3.0-1.0)/(8-2)*(cs-8)+3.0
+    #beta = (3.0-0.0)/(8-2)*(cs-8)+3.0
     #beta = (4.7-0.0)/(8-2)*(cs-8)+4.7
     return beta
 
@@ -82,6 +82,7 @@ def condition_distribution(year, cs0_data, pmatrix):
 
 def generate_bridge_safety(cs_dist):
     bridge_smps = []
+    bridge_pfs = []
     for (name, deck_dist, super_dist, sub_dist) in cs_dist:
         # deck
         beta = cs2reliable(deck_dist.rvs(size=1))
@@ -98,8 +99,9 @@ def generate_bridge_safety(cs_dist):
         smp = stats.bernoulli.rvs(1-bridge_pf)
 
         bridge_smps.append( (name, smp) )
+        bridge_pfs.append( (name, bridge_pf[0]) )
 
-    return bridge_smps
+    return bridge_smps, bridge_pfs
 
 def assign_traffic(graph, algorithm='FW', output=True):
     # traffic assignment
@@ -115,7 +117,7 @@ def assign_traffic(graph, algorithm='FW', output=True):
         print 'cost UE:', sum([link.delay*link.flow for link in graph.links.values()])
     return total_delay
 
-def get_initial_capacity(graph, bridge_db):
+def get_initial_capacity_deprecated(graph, bridge_db):
     # get initial capacity
     initial_cap=[]
     for bridge in bridge_db:
@@ -123,6 +125,18 @@ def get_initial_capacity(graph, bridge_db):
         capacity_pair = []
         for link in on_links:
             capacity = graph.links[link].capacity
+            capacity_pair.append(capacity)
+        initial_cap.append(capacity_pair)
+    return initial_cap
+
+def get_initial_capacity(graph, all_capacity, bridge_db):
+    # get initial capacity
+    initial_cap=[]
+    for bridge in bridge_db:
+        on_links = bridge[-1]
+        capacity_pair = []
+        for link in on_links:
+            capacity = all_capacity[graph.indlinks[link]]
             capacity_pair.append(capacity)
         initial_cap.append(capacity_pair)
     return initial_cap
@@ -153,6 +167,9 @@ def update_links(graph,fail_bridge_db,initial_link_cap,cap_drop_array,parameters
 def delay_samples(nsmp, graph, bridge_indx, bridge_db, cs_dist, cap_drop_array, theta, delaytype, bookkeeping={}):
     # start MC
     total_delay_array = []
+    all_capacity = np.zeros(nlink)
+    for link, link_indx in graph.indlinks.iteritems():
+        all_capacity[link_indx] = graph.links[link].cap
     for i in xrange(int(nsmp)):
         bridge_safety_smp = generate_bridge_safety(cs_dist)
         # update link input
@@ -164,7 +181,7 @@ def delay_samples(nsmp, graph, bridge_indx, bridge_db, cs_dist, cap_drop_array, 
             total_delay = bookkeeping[tuple(bridge_safety_profile)]
         else:
             fail_bridges = bridge_db[np.logical_not(bridge_safety_profile.astype(bool))]
-            initial_link_cap = get_initial_capacity(graph, fail_bridges)
+            initial_link_cap = get_initial_capacity(graph, all_capacity, fail_bridges)
             cap_drop_after_fail = cap_drop_array[np.logical_not(bridge_safety_profile.astype(bool))]
             update_links(graph,fail_bridges,initial_link_cap,cap_drop_after_fail,theta,delaytype)
             total_delay = assign_traffic(graph, algorithm='FW', output=False)
@@ -180,6 +197,9 @@ def delay_history(nsmp, graph, t, bridge_db, cs_dist, cap_drop_array, theta, del
 
     # start MC
     total_delay_array = []
+    all_capacity = np.zeros(nlink)
+    for link, link_indx in graph.indlinks.iteritems():
+        all_capacity[link_indx] = graph.links[link].cap
     for i in xrange(nsmp):
         bridge_safety_smp = generate_bridge_safety(cs_dist)
         # update link input
@@ -188,7 +208,7 @@ def delay_history(nsmp, graph, t, bridge_db, cs_dist, cap_drop_array, theta, del
             total_delay = bookkeeping[tuple(bridge_safety_profile)]
         else:
             fail_bridges = bridge_db[np.logical_not(bridge_safety_profile.astype(bool))]
-            initial_link_cap = get_initial_capacity(graph, fail_bridges)
+            initial_link_cap = get_initial_capacity(graph, all_capacity, fail_bridges)
             cap_drop_after_fail = cap_drop_array[np.logical_not(bridge_safety_profile.astype(bool))]
             update_links(graph,fail_bridges,initial_link_cap,cap_drop_after_fail,theta,delaytype)
             total_delay = assign_traffic(graph, algorithm='FW', output=False)
