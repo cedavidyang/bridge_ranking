@@ -149,11 +149,16 @@ def braess_paradox():
     #graph.add_link(3, 4, 1, delayfunc=g.create_delayfunc('Polynomial',(2.0,  1.0, [2.0])))
     # links
     links=[]
-    startnodes = [1,1,2,2,3]
-    endnodes = [2,3,3,4,4]
-    lengths = [2., 10., 2., 10., 2.]
+    #startnodes = [1,1,2,2,3]
+    #endnodes = [2,3,3,4,4]
+    #lengths = [2., 10., 2., 10., 2.]
+    #freespeed = 1.
+    #caps = [1., 10., 1., 10., 1.]
+    startnodes = [1,1,2,3]
+    endnodes = [2,3,4,4]
+    lengths = [2., 10., 10., 2.]
     freespeed = 1.
-    caps = [1., 10., 1., 10., 1.]
+    caps = [1., 10., 10., 1.]
     theta = matrix([1.0, 0.0, 0.0, 0.0])
     degree = len(theta)
     for startnode, endnode, length, cap in zip(startnodes, endnodes, lengths, caps):
