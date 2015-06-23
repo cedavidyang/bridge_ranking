@@ -10,6 +10,7 @@ import sys
 import psycopg2
 import numpy as np
 import scipy.stats as stats
+import copy
 
 import pyDUE.ue_solver as ue
 import pyDUE.draw_graph as d
@@ -50,9 +51,9 @@ def retrieve_bridge_db(cur_gis, cur_nbi):
     return np.asarray(bridge_db, dtype=object)
 
 def cs2reliable(cs):
-    beta = (4.7-3.0)/(8-2)*(cs-8)+4.7
+    #beta = (4.7-3.0)/(8-2)*(cs-8)+4.7
     #beta = (3.0-0.0)/(8-2)*(cs-8)+3.0
-    #beta = (4.7-0.0)/(8-2)*(cs-8)+4.7
+    beta = (4.7-0.0)/(8-2)*(cs-8)+4.7
     return beta
 
 def condition_distribution(year, cs0_data, pmatrix):
@@ -164,14 +165,12 @@ def update_links(graph,fail_bridge_db,initial_link_cap,cap_drop_array,parameters
                 capacity,length,freespeed))
     graph.modify_links_from_lists(to_update_links, delaytype)
 
-def delay_samples(nsmp, graph, bridge_indx, bridge_db, cs_dist, cap_drop_array, theta, delaytype, bookkeeping={}):
+def delay_samples(nsmp, graph0, delay0, all_capacity, bridge_indx, bridge_db, cs_dist, cap_drop_array, theta, delaytype, bookkeeping={}):
     # start MC
-    total_delay_array = []
-    all_capacity = np.zeros(nlink)
-    for link, link_indx in graph.indlinks.iteritems():
-        all_capacity[link_indx] = graph.links[link].cap
+    bridge_risk_array=[]
+    #total_delay_array = []
     for i in xrange(int(nsmp)):
-        bridge_safety_smp = generate_bridge_safety(cs_dist)
+        bridge_safety_smp, bridge_pfs = generate_bridge_safety(cs_dist)
         # update link input
         bridge_safety_profile = np.asarray(bridge_safety_smp)[:,1].astype('int')
         bridge_safety_profile[bridge_indx] = 0
@@ -179,19 +178,24 @@ def delay_samples(nsmp, graph, bridge_indx, bridge_db, cs_dist, cap_drop_array, 
         #multiprocessing.managers.DictProxy has no iterkeys attribute, see http://bugs.python.org/issue9733
         if tuple(bridge_safety_profile) in iter(bookkeeping.keys()):
             total_delay = bookkeeping[tuple(bridge_safety_profile)]
+            bridge_risk = bridge_pfs[bridge_indx][-1]*(total_delay-delay0)
         else:
+            graph = copy.deepcopy(graph0)
             fail_bridges = bridge_db[np.logical_not(bridge_safety_profile.astype(bool))]
             initial_link_cap = get_initial_capacity(graph, all_capacity, fail_bridges)
             cap_drop_after_fail = cap_drop_array[np.logical_not(bridge_safety_profile.astype(bool))]
             update_links(graph,fail_bridges,initial_link_cap,cap_drop_after_fail,theta,delaytype)
-            total_delay = assign_traffic(graph, algorithm='FW', output=False)
+            res = ue.solver_fw(graph, full=True)
             # save to bookkeeping
-            bookkeeping[tuple(bridge_safety_profile)] = total_delay
-        # add to total delay samples
-        total_delay_array.append(total_delay)
-    total_delay_array = np.asarray(total_delay_array)
+            bookkeeping[tuple(bridge_safety_profile)] = res[1][0,0]
+            bridge_risk = bridge_pfs[bridge_indx][-1]*(res[1][0,0]-delay0)
+        # add to total delay samples and risk samples
+        #total_delay_array.append(total_delay)
+        bridge_risk_array.append(bridge_risk)
+    #total_delay_array = np.asarray(total_delay_array)
+    bridge_risk_array = np.asarray(bridge_risk_array)
 
-    return bridge_indx, total_delay_array
+    return bridge_indx, bridge_risk_array
 
 def delay_history(nsmp, graph, t, bridge_db, cs_dist, cap_drop_array, theta, delaytype, bookkeeping={}):
 
