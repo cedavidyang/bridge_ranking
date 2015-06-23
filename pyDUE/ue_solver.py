@@ -229,13 +229,11 @@ def solver(graph=None, update=False, full=False, data=None, SO=False):
 #@profile
 def solver_fw(graph=None, update=False, full=False, data=None, SO=False, e=1e-4, niter=1e4, verbose=False):
     """Frank-Wolfe algorithm for UE according to Patriksson (1994)"""
-    if data is None: data = get_data(graph)
-    Aeq, beq, ffdelays, pm, type = data
-    nlink = len(ffdelays)
-    ncol = Aeq.size[1]
-    nrow = Aeq.size[0]
-    npair = ncol/nlink
-    nnode = nrow/npair
+    nnode = len(graph.nodes.keys())
+    npair = len(graph.ODs.keys())
+    nlink = len(graph.links.keys())
+    nrow = nnode*npair
+    ncol = nlink*npair
     # Step 0 (Initialization) Let f0 be a feasible solution to [TAP], LBD=0,
     # e>0, k=0 (using Dijkstra's shortest path algorithm in networkx
     LBD = 0.
