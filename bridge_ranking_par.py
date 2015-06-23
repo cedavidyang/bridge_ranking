@@ -14,6 +14,7 @@ import pyNBI.bridge as pybridge
 import pyNBI.traffic as pytraffic
 
 import pyDUE.generate_graph as g
+import pyDUE.ue_solver as ue
 from cvxopt import matrix, mul
 
 from multiprocessing import Pool, Manager
@@ -41,7 +42,8 @@ else:
 #create graph
 theta = matrix([0.0,0.0,0.0,0.15])
 delaytype = 'Polynomial'
-graph = g.test_LA(parameters=theta,delaytype=delaytype)
+graph0 = g.test_LA(parameters=theta,delaytype=delaytype)
+nlink = len(graph0.links)
 
 # capacity drop
 cap_drop_array = np.ones(np.asarray(bridge_db, dtype=object).shape[0])*0.1
@@ -50,14 +52,23 @@ t = 50
 # get current cs distribution
 cs_dist = pytraffic.condition_distribution(t, bridge_db, pmatrix)
 # number of smps
-nsmp = int(1e4)
+nsmp = int(1e2)
+# initial capacity without failed bridges
+all_capacity = np.zeros(nlink)
+for link, link_indx in graph0.indlinks.iteritems():
+    all_capacity[link_indx] = graph0.links[link].capacity
+# initial delay
+res0 = ue.solver_fw(graph0, full=True)
+delay0 = res0[1][0,0]
+res_bench = ue.solver(graph0)
 # create bookkeeping dict
 bookkeeping = {}
 manager = Manager()
 bookkeeping = manager.dict(bookkeeping)
 
 def loop_over_bridges(bridge_indx):
-    indx, smp = pytraffic.delay_samples(nsmp, graph, bridge_indx, bridge_db, cs_dist, cap_drop_array, theta, delaytype, bookkeeping)
+    indx, smp = pytraffic.delay_samples(nsmp, graph0, delay0, all_capacity, bridge_indx,
+            bridge_db, cs_dist, cap_drop_array, theta, delaytype, bookkeeping)
     return indx, smp
 
 def main():
@@ -66,6 +77,7 @@ def main():
     try:
         pool = Pool(processes = 1)
         res = pool.map_async(loop_over_bridges, np.arange(bridge_db.shape[0])).get(0xFFFF)
+        #res = map(loop_over_bridges, np.arange(1))
         #res = pool.map_async(loop_over_bridges,
                 #itertools.izip(itertools.repeat(nsmp), itertools.repeat(t),
                     #itertools.repeat(graph), np.arange(bridge_db.shape[0]), itertools.repeat(cs_dist),
@@ -84,14 +96,22 @@ def main():
 if __name__ == '__main__':
     res = main()
     bridge_indx = np.asarray(res, dtype=object)[:,0].astype('int')
-    total_delay_data = np.vstack(np.asarray(res, dtype=object)[:,1]).T/3600.
+    bridge_risk_data = np.vstack(np.asarray(res, dtype=object)[:,1]).T/3600.
+
+    # postprocessing
     import matplotlib.pyplot as plt
+    plt.ion()
+    plt.rc('font', family='serif', size=12)
+    plt.rc('text', usetex=True)
+
     fig, ax = plt.subplots(1,1)
-    ax.boxplot(total_delay_data)
+    ax.boxplot(bridge_risk_data, showmeans=True)
+    plt.xlabel('Bridge index')
+    plt.ylabel('Risk of bridge failure (time unit)')
     xtick_label = bridge_db[bridge_indx, 0]
     ax.set_xticklabels(xtick_label, rotation='vertical')
     left = fig.subplotpars.left
     right = fig.subplotpars.right
     top = fig.subplotpars.top
     bottom = fig.subplotpars.bottom
-    plt.subplots_adjust(left=left, right=right, top=top+0.05, bottom=bottom+0.05)
+    plt.subplots_adjust(left=left, right=right, top=top+0.07, bottom=bottom+0.07)
