@@ -17,7 +17,7 @@ import pyDUE.generate_graph as g
 import pyDUE.ue_solver as ue
 from cvxopt import matrix, mul
 
-from multiprocessing import Pool, Manager
+from multiprocessing import Pool, Manager, freeze_support
 import itertools
 
 import time
@@ -26,9 +26,9 @@ import datetime
 # global variables for parallel computing... stupid multiprocessing in Python
 
 # open databases
-conn_gis = psycopg2.connect("dbname='gisdatabase' user='amadeus' host='localhost' password=''")
+conn_gis = psycopg2.connect("dbname='gisdatabase' user='amadeus' host='localhost' password='19881229'")
 cur_gis = conn_gis.cursor()
-conn_nbi = psycopg2.connect("dbname='nbi' user='amadeus' host='localhost' password=''")
+conn_nbi = psycopg2.connect("dbname='nbi' user='amadeus' host='localhost' password='19881229'")
 cur_nbi = conn_nbi.cursor()
 
 # retrieve initial condition states of bridges
@@ -52,7 +52,7 @@ t = 50
 # get current cs distribution
 cs_dist = pytraffic.condition_distribution(t, bridge_db, pmatrix)
 # number of smps
-nsmp = int(1e2)
+nsmp = int(1e4)
 # initial capacity without failed bridges
 all_capacity = np.zeros(nlink)
 for link, link_indx in graph0.indlinks.iteritems():
@@ -63,19 +63,23 @@ delay0 = res0[1][0,0]
 res_bench = ue.solver(graph0)
 # create bookkeeping dict
 bookkeeping = {}
-manager = Manager()
-bookkeeping = manager.dict(bookkeeping)
 
 def loop_over_bridges(bridge_indx):
     indx, smp = pytraffic.delay_samples(nsmp, graph0, delay0, all_capacity, bridge_indx,
             bridge_db, cs_dist, cap_drop_array, theta, delaytype, bookkeeping)
     return indx, smp
+    
+if __name__ == '__main__':
+    freeze_support()
 
-def main():
+    manager = Manager()
+    bookkeeping = manager.dict(bookkeeping)
+
+
     start_delta_time = time.time()
     print 'CALC: Parallel version'
     try:
-        pool = Pool(processes = 1)
+        pool = Pool(processes = 11)
         res = pool.map_async(loop_over_bridges, np.arange(bridge_db.shape[0])).get(0xFFFF)
         #res = map(loop_over_bridges, np.arange(1))
         #res = pool.map_async(loop_over_bridges,
@@ -91,10 +95,7 @@ def main():
         pool.join()
     delta_time = time.time() - start_delta_time
     print 'DONE',str(datetime.timedelta(seconds=delta_time))
-    return res
 
-if __name__ == '__main__':
-    res = main()
     bridge_indx = np.asarray(res, dtype=object)[:,0].astype('int')
     bridge_risk_data = np.vstack(np.asarray(res, dtype=object)[:,1]).T/3600.
 
