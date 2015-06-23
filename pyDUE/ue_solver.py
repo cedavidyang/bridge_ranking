@@ -6,19 +6,20 @@ Created on Apr 20, 2014
 
 import numpy as np
 from cvxopt import matrix, spmatrix, solvers, spdiag, mul, div, sparse
+solvers.options['reltol'] = 1e-7
 import rank_nullspace as rn
 from util import find_basis
 from kktsolver import get_kktsolver
 import networkx as nx
 import itertools
 import scipy.optimize as op
+import copy
 from util import create_networkx_graph
 import logging
 if logging.getLogger().getEffectiveLevel() >= logging.DEBUG:
     solvers.options['show_progress'] = False
 else:
     solvers.options['show_progress'] = True
-
 
 
 def constraints(graph, rm_redundant = False):
@@ -225,7 +226,7 @@ def solver(graph=None, update=False, full=False, data=None, SO=False):
     if full: return linkflows, x    
     return linkflows
 
-
+#@profile
 def solver_fw(graph=None, update=False, full=False, data=None, SO=False, e=1e-4, niter=1e4, verbose=False):
     """Frank-Wolfe algorithm for UE according to Patriksson (1994)"""
     if data is None: data = get_data(graph)
@@ -235,27 +236,10 @@ def solver_fw(graph=None, update=False, full=False, data=None, SO=False, e=1e-4,
     nrow = Aeq.size[0]
     npair = ncol/nlink
     nnode = nrow/npair
-    G = nx.DiGraph()
-    G.add_nodes_from(graph.nodes.keys())
-    G.add_edges_from([(key[0],key[1]) for key in graph.links.keys()])
-    for u,v in G.edges():
-        link = graph.links[(u,v,1)]
-        G[u][v]['obj'] = 0
-        G[u][v]['cost'] = link.ffdelay
     # Step 0 (Initialization) Let f0 be a feasible solution to [TAP], LBD=0,
     # e>0, k=0 (using Dijkstra's shortest path algorithm in networkx
     LBD = 0.
-    f = matrix(0.0,(ncol,1))
-    iod = 0
-    for OD in graph.ODs.itervalues():
-        nodes_on_path = nx.dijkstra_path(G, OD.o, OD.d, weight='cost')
-        for indx in xrange(len(nodes_on_path)-1):
-            u = nodes_on_path[indx]
-            v = nodes_on_path[indx+1]
-            indx=iod*nlink+graph.indlinks[(u,v,1)]
-            f[indx,0] = OD.flow
-        iod += 1
-        #f += [l.flow for l in graph.links.itervalues()]
+    f = solver_kernal(graph)
     def Tf_func(f):
         linkflows = matrix(0.0, (nlink,1))
         for k in xrange(npair): linkflows += f[k*nlink:(k+1)*nlink]
@@ -266,7 +250,7 @@ def solver_fw(graph=None, update=False, full=False, data=None, SO=False, e=1e-4,
         for k in xrange(npair): linkflows += f[k*nlink:(k+1)*nlink]
         dTf = nlink*[0.0]
         for link_key, link_indx in graph.indlinks.iteritems():
-            dTfi = graph.links[link_key].delayfunc.compute_delay(linkflows[link_indx]) 
+            dTfi = graph.links[link_key].delayfunc.compute_delay(linkflows[link_indx])
             dTf[link_indx] = dTfi
         dTf = matrix(npair*dTf)
         return dTf
@@ -274,9 +258,10 @@ def solver_fw(graph=None, update=False, full=False, data=None, SO=False, e=1e-4,
         # Step 1 (Search direction generation) LP problem
         Tf = Tf_func(f)
         dTf = dTf_func(f)
-        G = spmatrix(-1.0, range(ncol), range(ncol))
-        h = matrix(ncol*[0.0])
-        y = solvers.lp(dTf, G, h, Aeq, beq)['x']
+        #G = spmatrix(-1.0, range(ncol), range(ncol))
+        #h = matrix(ncol*[0.0])
+        #y = solvers.lp(dTf, G, h, Aeq, beq)['x']
+        y = solver_kernal(graph,f)
         p = y - f
         # Step 2 (Convergence check)
         def T_linear(x):
@@ -285,7 +270,7 @@ def solver_fw(graph=None, update=False, full=False, data=None, SO=False, e=1e-4,
         LBD = np.maximum(LBD, T_linear(y))
         if verbose:
             print 'Iter #{}a: Tf={}, T_linear={}, LBD={}, e={}'.format(k+1, Tf, T_linear(y), LBD, e)
-        if (Tf - LBD) / LBD < e:
+        if LBD!=0 and (Tf - LBD) / LBD < e:
             break
         # Step 3 (Line search)
         #def T(step):
@@ -295,14 +280,15 @@ def solver_fw(graph=None, update=False, full=False, data=None, SO=False, e=1e-4,
         def T(step):
             return  Tf_func(f+step*p)
         step = op.minimize(T, 0.5, bounds=[(0., 1.)]).x[0]
-        #step = 1./(k+1)
+        #step = 1./(k+2)
         # Step 4 (Update)
         f += step*p
         f = matrix(f, tc='d')
         # Step 5 (Convergence check)
         if verbose:
             print 'Iter #{}b: Tf={}, step={}, LBD={}, e={}'.format(k+1, Tf_func(f), step, LBD, e)
-        if (Tf_func(f) - LBD) / LBD < e: break
+        if LBD!=0 and (Tf_func(f) - LBD) / LBD < e:
+            break
 
     linkflows = matrix(0.0, (nlink,1))
     for k in range(npair): linkflows += f[k*nlink:(k+1)*nlink]
@@ -311,21 +297,261 @@ def solver_fw(graph=None, update=False, full=False, data=None, SO=False, e=1e-4,
         logging.info('Update link flows, delays in Graph.'); graph.update_linkflows_linkdelays(linkflows)
         logging.info('Update path delays in Graph.'); graph.update_pathdelays()
 
+    if full: return linkflows, dTf_func(f).T*f
     return linkflows
+
+#@profile
+def solver_sue(graph=None, update=False, full=False, data=None, SO=False, verbose=False, update_func=None,
+        bridge_indx=None, **smpargs):
+    """Stochastic user equilibrium (SUE) based on Sheffi (1982)
+    -Input: **smpargs must include the following keys: e, ninner, niter, nmin"""
+
+    default_dict = {'e':1e-3, 'estd':0.1, 'ninner':1, 'niter':10000, 'nmin':1, 'nsmp':100}
+    for key in [k for k in default_dict.keys() if k not in smpargs.keys()]:
+        smpargs[key] = default_dict[key]
+    e = smpargs['e']
+    estd = smpargs['estd']
+    ninner = smpargs['ninner']
+    niter = smpargs['niter']
+    nmin = smpargs['nmin']
+    nsmp = smpargs['nsmp']
+
+    # Step 0 (initialization)
+    if data is None: data = get_data(graph)
+    Aeq, beq, ffdelays, pm, type = data
+    nlink = len(ffdelays)
+    ncol = Aeq.size[1]
+    nrow = Aeq.size[0]
+    npair = ncol/nlink
+    nnode = nrow/npair
+    f = solver_kernal(graph, algorithm='Dijkstra', output='sparse')
+    capacity = np.zeros(nlink)
+    for link, link_indx in graph.indlinks.iteritems():
+        capacity[link_indx] = graph.links[link].capacity
+    def dTf_func(f):
+        linkflows = matrix(0.0, (nlink,1))
+        for k in xrange(npair): linkflows += f[k*nlink:(k+1)*nlink]
+        dTf = nlink*[0.0]
+        for link_key, link_indx in graph.indlinks.iteritems():
+            dTfi = graph.links[link_key].delayfunc.compute_delay(linkflows[link_indx])
+            dTf[link_indx] = dTfi
+        dTf = matrix(npair*dTf)
+        return dTf
+
+    # Outer Loop
+    diff_list = []
+    iAON = 1
+    error_list = []
+    total_delay = 0.0
+    for k in xrange(int(niter-1)):
+        y = 0
+        # Inner Loop
+        for i in xrange(int(ninner)):
+            # Step 1: sample one realization for each link
+            graph_tmp = copy.deepcopy(graph)
+            update_func(graph_tmp, capacity, bridge_indx)
+            #yi = solver_kernal(graph_tmp, f, Aeq, beq, nlink)
+            yi = solver_kernal(graph_tmp, flow=f, algorithm='Dijkstra', output='dense')
+            #error_list.append(np.linalg.norm(f-matrix([5.,5.,5.,5.])))
+            iAON += 1
+            y = (y*i+yi)/(i+1.)
+        # Method of sucessive average
+        p = y-f
+        f0 = f*1.0
+        f += (1./(k+2.))*p
+        if full:
+            total_delay = (1.-1./(k+2))*total_delay + 1./(k+2)*dTf_func(y).T*y
+
+        diff_list.append(np.linalg.norm(f-f0))
+        diff_mean = np.mean(diff_list[int(-nsmp):])
+        diff_std = np.std(diff_list[int(-nsmp):])
+        if verbose:
+            print 'Iter #{}: mean difference = {}, std difference = {}, e={}, estd={}'.format(
+                    k+1, diff_mean, diff_std, e, estd)
+        if diff_mean<e and diff_std<estd and k+1>=nmin:
+            break
+
+    np.save('diff_list.npy', diff_list)
+    np.savez('performance_sue.npz', nAON=iAON, error=error_list)
+    linkflows = matrix(0.0, (nlink,1))
+    for k in range(npair): linkflows += f[k*nlink:(k+1)*nlink]
+
+    if update:
+        logging.info('Update link flows, delays in Graph.'); graph.update_linkflows_linkdelays(linkflows)
+        logging.info('Update path delays in Graph.'); graph.update_pathdelays()
+
+    if full: return linkflows,total_delay
+    return linkflows
+
+#@profile
+def solver_kernal(graph=None, flow=None, algorithm='Dijkstra', output='dense'):
+    nnode = len(graph.nodes.keys())
+    npair = len(graph.ODs.keys())
+    nlink = len(graph.links.keys())
+    nrow = nnode*npair
+    ncol = nlink*npair
+
+    G = nx.DiGraph()
+    G.add_nodes_from(graph.nodes.keys())
+    G.add_edges_from([(key[0],key[1]) for key in graph.links.keys()])
+    for u,v in G.edges():
+        link = graph.links[(u,v,1)]
+        if flow is None:
+            G[u][v]['cost'] = link.delayfunc.compute_delay(link.flow)
+        else:
+            indx = graph.indlinks[(u,v,1)]
+            G[u][v]['cost'] = link.delayfunc.compute_delay(flow[indx])
+
+    f = matrix(0.0,(ncol,1))
+    iod = 0
+    for OD in graph.ODs.itervalues():
+        npath = 0
+        for nodes_on_path in nx.all_shortest_paths(G, OD.o, OD.d, weight='cost'):
+            for indx in xrange(len(nodes_on_path)-1):
+                u = nodes_on_path[indx]
+                v = nodes_on_path[indx+1]
+                indx=iod*nlink+graph.indlinks[(u,v,1)]
+                f[indx,0] += OD.flow
+            npath += 1
+        f = f/npath
+        #nodes_on_path = nx.dijkstra_path(G, OD.o, OD.d, weight='cost')
+        #for indx in xrange(len(nodes_on_path)-1):
+            #u = nodes_on_path[indx]
+            #v = nodes_on_path[indx+1]
+            #indx=iod*nlink+graph.indlinks[(u,v,1)]
+            #f[indx,0] = OD.flow
+        iod += 1
+
+    return f
+
+def solver_kernal_deprecated(graph, f, Aeq, beq, nlink):
+    ncol = Aeq.size[1]
+    nrow = Aeq.size[0]
+    npair = ncol/nlink
+    nnode = nrow/npair
+    def dTf_func(f):
+        linkflows = matrix(0.0, (nlink,1))
+        for k in xrange(npair): linkflows += f[k*nlink:(k+1)*nlink]
+        dTf = nlink*[0.0]
+        for link_key, link_indx in graph.indlinks.iteritems():
+            dTfi = graph.links[link_key].delayfunc.compute_delay(linkflows[link_indx])
+            dTf[link_indx] = dTfi
+        dTf = matrix(npair*dTf)
+        return dTf
+    dTf = dTf_func(f)
+    G = spmatrix(-1.0, range(ncol), range(ncol))
+    h = matrix(ncol*[0.0])
+    y = solvers.lp(dTf, G, h, Aeq, beq)['x']
+
+    return y
 
 if __name__ == '__main__':
     from generate_graph import braess_paradox
+    import pyNBI.traffic as pytraffic
     import time
     import datetime
     graph = braess_paradox()
-    num = 1000
+    num = 1
     starttime = time.time()
     for i in xrange(num):
         f1 = solver(graph)
     delta_time = time.time() - starttime
     print 'cvxopt: {} loops, total time {}'.format(num, datetime.timedelta(seconds=delta_time))
+    # In order to check efficiency of FW-LP, FW-AON, MSA-LP, FW-AON
+    # FW to MSA: change step definition: line search to 1./(k+2.)
+    # LP to AON: change solver_kernal in loop to solver_kernal_deprecated
     starttime = time.time()
     for i in xrange(num):
-        f2 = solver_fw(graph, verbose=False, e=1e-4, niter=100)
+        f2 = solver_fw(graph, verbose=False, e=1e-7)
     delta_time = time.time() - starttime
     print 'fw: {} loops, total time {}'.format(num, datetime.timedelta(seconds=delta_time))
+    #for i in xrange(num):
+        #f3 = solver_sue(graph, verbose=False, e=1e-4)
+    #delta_time = time.time() - starttime
+    #print 'fw: {} loops, total time {}'.format(num, datetime.timedelta(seconds=delta_time))
+
+    #import sys
+    #sys.exit(1)
+    # debug of sue
+    def update_func(graph, capacity, bridge_indx=None):
+        theta = matrix([1.0, 0.0, 0.0, 0.0])
+        delaytype = 'Polynomial'
+        bridge_db = np.array(
+            [['      1', 5, 6, 7, 10.0e-3, [(1, 2, 1)]],
+            ['      2', 5, 6, 6, 1.0e-3, [(1, 3, 1)]],
+            ['      3', 5, 6, 6, 1.0e-3, [(2, 4, 1)]],
+            ['      4', 5, 6, 7, 10.0e-3, [(3, 4, 1)]]], dtype=object)
+        pmatrix = np.load('pmatrix.npy')
+        cap_drop_array = np.ones(np.asarray(bridge_db, dtype=object).shape[0])*0.0
+        # time of interest
+        t = 50
+        # get current cs distribution
+        cs_dist = pytraffic.condition_distribution(t, bridge_db, pmatrix)
+
+        bridge_safety_smp = pytraffic.generate_bridge_safety(cs_dist)
+        # update link input
+        bridge_safety_profile = np.asarray(bridge_safety_smp)[:,1].astype('int')
+        if bridge_indx is not None:
+            bridge_safety_profile[bridge_indx] = 0
+        fail_bridges = bridge_db[np.logical_not(bridge_safety_profile.astype(bool))]
+        initial_link_cap = pytraffic.get_initial_capacity(graph, capacity, fail_bridges)
+        cap_drop_after_fail = cap_drop_array[np.logical_not(bridge_safety_profile.astype(bool))]
+        pytraffic.update_links(graph,fail_bridges,initial_link_cap,cap_drop_after_fail,theta,delaytype)
+
+    # bridge importance
+    graph0 = braess_paradox()
+    nlink = len(graph.links)
+    nsmp_array = np.arange(10e3, 11e3, 3e2, dtype='int')
+    total_delay_data = []
+    capacity = np.zeros(nlink)
+    for link, link_indx in graph.indlinks.iteritems():
+        capacity[link_indx] = graph.links[link].capacity
+    for bridge_indx in xrange(4):
+        total_delay=[]
+        for nsmp in nsmp_array:
+            for i in xrange(nsmp):
+                #update_func(graph, capacity, initial=True)
+                graph = copy.deepcopy(graph0)
+                update_func(graph, capacity, bridge_indx=bridge_indx)
+                res = solver_fw(graph, full=True)
+                total_delay.append(res[1][0,0])
+        total_delay_data.append(total_delay)
+
+    total_delay_data = np.asarray(total_delay_data).T
+    import matplotlib.pyplot as plt
+    plt.rc('font', family='serif', size=12)
+    plt.rc('text', usetex=True)
+    fig, ax = plt.subplots(1,1)
+    ax.boxplot(total_delay_data)
+    plt.xlabel('Bridge index')
+    plt.ylabel('Conditional total travel time (CTTT), time unit')
+    ax.tick_params(axis='x', labelsize=12)
+    #xtick_label = bridge_db[bridge_indx, 0]
+    #ax.set_xticklabels(xtick_label, rotation='vertical')
+    #left = fig.subplotpars.left
+    #right = fig.subplotpars.right
+    #top = fig.subplotpars.top
+    #bottom = fig.subplotpars.bottom
+    #plt.subplots_adjust(left=left, right=right, top=top+0.05, bottom=bottom+0.05)
+
+    graph = braess_paradox()
+    f3, total_delay_sue  = solver_sue(graph, full=True, verbose=False, update_func=update_func,
+            ninner=1, niter=10000)
+    diff_sue1_list = np.load('diff_list.npy')
+    nAON_sue1_list = np.load('performance_sue.npz')['nAON']
+    error_sue1_list = np.load('performance_sue.npz')['error']
+
+    #f4 = solver_sue(graph, verbose=False, update_func=update_func, ninner=10, niter=1000)
+    #diff_sue2_list = np.load('diff_list.npy')
+    #nAON_sue2_list = np.load('performance_sue.npz')['nAON']
+    #error_sue2_list = np.load('performance_sue.npz')['error']
+
+    #f4 = solver_sue(graph, verbose=False, update_func=update_func, ninner=50, niter=200)
+    #diff_sue3_list = np.load('diff_list.npy')
+    #nAON_sue3_list = np.load('performance_sue.npz')['nAON']
+    #error_sue3_list = np.load('performance_sue.npz')['error']
+
+    #n = diff_list.size
+    #import matplotlib.pyplot as plt
+    #plt.plot(np.cumsum(diff_list)/np.arange(1,1+n), '-')
+    #plt.ylim((0,0.01))
