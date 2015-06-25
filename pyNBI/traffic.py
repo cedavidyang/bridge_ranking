@@ -14,6 +14,7 @@ import copy
 
 import pyDUE.ue_solver as ue
 import pyDUE.draw_graph as d
+#from pyNataf.nataf import semidefinitive
 from pyDUE.util import distance_on_unit_sphere
 from cvxopt import mul
 
@@ -88,7 +89,7 @@ def condition_distribution(year, bridge_db, pmatrix):
 
     return cs_dist
 
-def generate_bridge_safety(cs_dist):
+def generate_bridge_safety_deprecated(cs_dist):
     bridge_smps = []
     bridge_pfs = []
     for (name, deck_dist, super_dist, sub_dist) in cs_dist:
@@ -108,6 +109,49 @@ def generate_bridge_safety(cs_dist):
 
         bridge_smps.append( (name, smp) )
         bridge_pfs.append( (name, bridge_pf[0]) )
+
+    return bridge_smps, bridge_pfs
+
+def generate_bridge_safety(cs_dist, bridge_indx=None, correlation=None, nataf=None, corrcoef=0.):
+    bridge_smps = []
+    bridge_pfs = []
+    # generate random field
+    if nataf is None:
+        norm_cov = correlation
+    else:
+        norm_cov = nataf(correlation)
+    # norm_cov = semidefinitive(norm_cov)
+    rv = stats.multivariate_normal(mean=np.zeros(len(cs_dist)), cov=norm_cov, allow_singular=True)
+    field_smps = stats.norm.cdf(rv.rvs(size=1))
+    # generate pf data
+    for (name, deck_dist, super_dist, sub_dist) in cs_dist:
+        # deck
+        beta = cs2reliable(deck_dist.rvs(size=1))
+        deck_pf = stats.norm.cdf(-beta)
+        # super
+        beta = cs2reliable(super_dist.rvs(size=1))
+        super_pf = stats.norm.cdf(-beta)
+        # sub
+        beta = cs2reliable(sub_dist.rvs(size=1))
+        sub_pf = stats.norm.cdf(-beta)
+        # entire bridge, only super and sub are considered
+        bridge_pf = super_pf + sub_pf - (corrcoef*np.sqrt(super_pf*(1-super_pf))*\
+                np.sqrt(sub_pf*(1-sub_pf))+super_pf*sub_pf)
+        bridge_pfs.append( [name, bridge_pf[0]] )
+    # update pf data
+    if bridge_indx is not None:
+        pfe = bridge_pfs[bridge_indx][1]
+        bridge_pfs[bridge_indx][1] = 1.
+        for indx, bridge_pf_data in enumerate(bridge_pfs):
+            rho = correlation[bridge_indx,indx]
+            pf0 = bridge_pfs[indx][1]
+            pf1 = (rho*np.sqrt(pfe*(1-pfe))*np.sqrt(pf0*(1-pf0))+pf0*pfe)/pfe
+            bridge_pfs[indx][1] = pf1
+    # generate bridge state sample
+    for bridge_pf, field_smp in zip(bridge_pfs, field_smps):
+        smp = bridge_pf[1]<field_smp
+        # smp=True: safe; smp=False: fail
+        bridge_smps.append( [name, smp] )
 
     return bridge_smps, bridge_pfs
 
@@ -172,14 +216,16 @@ def update_links(graph,fail_bridge_db,initial_link_cap,cap_drop_array,parameters
                 capacity,length,freespeed))
     graph.modify_links_from_lists(to_update_links, delaytype)
 
-def delay_samples(nsmp, graph0, delay0, all_capacity, bridge_indx, bridge_db, cs_dist, cap_drop_array, theta, delaytype, bookkeeping={}):
+def delay_samples(nsmp, graph0, delay0, all_capacity, bridge_indx, bridge_db, cs_dist,
+        cap_drop_array, theta, delaytype, correlation=None, nataf=None, corrcoef=0., bookkeeping={}):
     # start MC
     bridge_risk_array=[]
     #total_delay_array = []
     for i in xrange(int(nsmp)):
-        bridge_safety_smp, bridge_pfs = generate_bridge_safety(cs_dist)
+        bridge_safety_smp, bridge_pfs = generate_bridge_safety(cs_dist, bridge_indx,
+                correlation, nataf, corrcoef)
         # update link input
-        bridge_safety_profile = np.asarray(bridge_safety_smp)[:,1].astype('int')
+        bridge_safety_profile = np.asarray(bridge_safety_smp,dtype=object)[:,1].astype('int')
         bridge_safety_profile[bridge_indx] = 0
         #if tuple(bridge_safety_profile) in bookkeeping.iterkeys():
         #multiprocessing.managers.DictProxy has no iterkeys attribute, see http://bugs.python.org/issue9733
