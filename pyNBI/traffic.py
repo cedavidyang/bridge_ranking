@@ -14,6 +14,7 @@ import copy
 
 import pyDUE.ue_solver as ue
 import pyDUE.draw_graph as d
+from pyDUE.util import distance_on_unit_sphere
 from cvxopt import mul
 
 def retrieve_bridge_db(cur_gis, cur_nbi):
@@ -36,6 +37,7 @@ def retrieve_bridge_db(cur_gis, cur_nbi):
         links_data.append(link_pair)
     # get bridge condition ratings
     s='select cast(structure_number_008 as varchar(15)), cast(deck_cond_058 as int), \
+    cast(lat_016 as int), cast(long_017 as int),\
     cast(superstructure_cond_059 as int), cast(substructure_cond_060 as int), \
     cast(detour_kilos_019 as real) \
     from nbi2014.ca2014 where ltrim(rtrim(structure_number_008)) in {} and \
@@ -61,14 +63,14 @@ def cs2reliable(cs):
     beta = (rho-1.)/np.sqrt(rho**2*0.15**2+(2.5*0.15)**2)
     return beta
 
-def condition_distribution(year, cs0_data, pmatrix):
+def condition_distribution(year, bridge_db, pmatrix):
     cs_dist = []
     cs = np.arange(8,0,-1)
     if int(year) % 2 !=0:
         print 'illegal year of interest, must be even number'
     else:
         indx = int(year)/2
-    for (name, deck_cs0, super_cs0, sub_cs0, dummy, dummy) in cs0_data:
+    for (name, lat, long, deck_cs0, super_cs0, sub_cs0, dummy, dummy) in bridge_db:
         # create reliability index distribution of deck
         deck_cs0_array = (cs==deck_cs0).astype('float')
         deck_pk = np.dot(np.linalg.matrix_power(pmatrix.T,indx),deck_cs0_array)
