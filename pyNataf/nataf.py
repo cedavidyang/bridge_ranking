@@ -43,7 +43,6 @@ def nataf_transform(rho1, x1rv, x2rv=None, xtol=1e-6, rtol=1e-5, nsmp=1e4, nconv
 
     return rho0
 
-
 def nataf_transform_inverse(rho0, xtol=1e-5, rtol=1e-4):
     def find_root(rho1):
         if rho1>1.-xtol: rho1=1.-xtol
@@ -79,6 +78,10 @@ def bridge_correlation(bridge_db, corr_length):
             corr[j_indx,i_indx] = rho_ij
 
     return corr
+
+def natafcurve(x, a, b, c):
+    rho1 = x*(a*(x-1.)**3+b*(x-1.)**2+c*(x-1.)+1.)
+    return rho1
 
 if __name__ == '__main__':
     import matplotlib.pyplot as plt
@@ -118,10 +121,9 @@ if __name__ == '__main__':
     # least square
     xdata = rho0_array[:-1]
     ydata = rho1_array[:-1]
-    def polycurve(x, a, b, c):
-        return x*(a*(x-1.)**3+b*(x-1.)**2+c*(x-1.)+1.)
-    popt, pcov = op.curve_fit(polycurve, xdata, ydata)
-    plt.plot(xdata, polycurve(xdata,*popt))
+    popt, pcov = op.curve_fit(natafcurve, xdata, ydata)
+    plt.plot(xdata, natafcurve(xdata,*popt))
+    np.save('nataf_popt.npy', popt)
 
 
     import sys; sys.exit(1)
