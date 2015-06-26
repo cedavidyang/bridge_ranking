@@ -122,7 +122,7 @@ def generate_bridge_safety(cs_dist, bridge_indx=None, correlation=None, nataf=No
         norm_cov = correlation
     else:
         norm_cov = nataf(correlation)
-    norm_cov = semidefinitive(norm_cov)
+    norm_cov = semidefinitive(norm_cov, tol=1e-14, deftol=1e-12)
     rv = stats.multivariate_normal(mean=np.zeros(len(cs_dist)), cov=norm_cov, allow_singular=True)
     field_smps = stats.norm.cdf(rv.rvs(size=1))
     # generate pf data
