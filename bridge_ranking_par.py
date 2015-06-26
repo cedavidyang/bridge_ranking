@@ -15,6 +15,7 @@ import pyNBI.traffic as pytraffic
 
 import pyDUE.generate_graph as g
 import pyDUE.ue_solver as ue
+from pyNataf.nataf import natafcurve
 from cvxopt import matrix, mul
 
 from multiprocessing import Pool, Manager, freeze_support
