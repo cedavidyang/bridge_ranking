@@ -111,7 +111,7 @@ if __name__ == '__main__':
     import matplotlib.pyplot as plt
     plt.ion()
     plt.rc('font', family='serif', size=12)
-    plt.rc('text', usetex=True)
+    #plt.rc('text', usetex=True)
 
     fig, ax = plt.subplots(1,1)
     ax.boxplot(bridge_risk_data, showmeans=True)
