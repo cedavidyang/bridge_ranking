@@ -127,10 +127,10 @@ if __name__ == '__main__':
 
     # save data
     import shelve
-    dir_name = './figures/'+'ranking_simple '+str(datetime.datetime.now())
+    dir_name = './figures/'+'ranking_LA '+str(datetime.datetime.now())
     if not os.path.exists(dir_name):
         os.makedirs(dir_name)
-    plt.savefig(dir_name+'/bridge_ranking_simple.eps')
+    plt.savefig(dir_name+'/bridge_ranking_LA.eps')
     filename=dir_name+'/data_shelve.out'
     my_shelf = shelve.open(filename,'n') # 'n' for new
     for key in dir():
