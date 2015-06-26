@@ -64,6 +64,9 @@ delay0 = res0[1][0,0]
 res_bench = ue.solver(graph0)
 # create bookkeeping dict
 bookkeeping = {}
+freeze_support()
+manager = Manager()
+bookkeeping = manager.dict(bookkeeping)
 # correlation
 corr_length = 8.73
 correlation = pybridge.bridge_correlation(bridge_db, corr_length)
@@ -78,10 +81,6 @@ def loop_over_bridges(bridge_indx):
     return indx, smp
 
 if __name__ == '__main__':
-    freeze_support()
-
-    manager = Manager()
-    bookkeeping = manager.dict(bookkeeping)
 
 
     start_delta_time = time.time()
@@ -127,16 +126,18 @@ if __name__ == '__main__':
 
     # save data
     import shelve
-    dir_name = './figures/'+'ranking_LA '+str(datetime.datetime.now())
+    dir_name = os.path.join(os.path.abspath('./'), 'figures',
+        'ranking_LA '+str(datetime.datetime.now()).replace(':', '-'))
     if not os.path.exists(dir_name):
         os.makedirs(dir_name)
-    plt.savefig(dir_name+'/bridge_ranking_LA.eps')
-    filename=dir_name+'/data_shelve.out'
+    plt.savefig(os.path.join(dir_name,'/bridge_ranking_LA.eps'))
+    filename=os.path.join(dir_name,'data_shelve.out')
     my_shelf = shelve.open(filename,'n') # 'n' for new
     for key in dir():
         try:
             my_shelf[key] = globals()[key]
-        except TypeError:
+        #except TypeError:
+        except:
             #
             # __builtins__, my_shelf, and imported modules can not be shelved.
             #
