@@ -124,3 +124,30 @@ if __name__ == '__main__':
     top = fig.subplotpars.top
     bottom = fig.subplotpars.bottom
     plt.subplots_adjust(left=left, right=right, top=top+0.07, bottom=bottom+0.07)
+
+    # save data
+    import shelve
+    dir_name = './figures/'+'ranking_simple '+str(datetime.datetime.now())
+    if not os.path.exists(dir_name):
+        os.makedirs(dir_name)
+    plt.savefig(dir_name+'/bridge_ranking_simple.eps')
+    filename=dir_name+'/data_shelve.out'
+    my_shelf = shelve.open(filename,'n') # 'n' for new
+    for key in dir():
+        try:
+            my_shelf[key] = globals()[key]
+        except TypeError:
+            #
+            # __builtins__, my_shelf, and imported modules can not be shelved.
+            #
+            if not key.startswith("_"):
+                print('ERROR shelving: {0}'.format(key))
+    my_shelf.close()
+    # to restore workspace, uncommon the follows
+    #my_shelf = shelve.open(filename)
+    #for key in my_shelf:
+        #globals()[key]=my_shelf[key]
+    #my_shelf.close()
+
+    plt.ion()
+    plt.show()
