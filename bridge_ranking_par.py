@@ -63,6 +63,13 @@ delay0 = res0[1][0,0]
 res_bench = ue.solver(graph0)
 # create bookkeeping dict
 bookkeeping = {}
+# correlation
+corr_length = 8.73
+correlation = pybridge.bridge_correlation(bridge_db, corr_length)
+# nataf
+popt = np.load('nataf_popt.npy')
+def nataf(x):
+    return natafcurve(x,*popt)
 
 def loop_over_bridges(bridge_indx):
     indx, smp = pytraffic.delay_samples(nsmp, graph0, delay0, all_capacity, bridge_indx,
