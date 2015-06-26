@@ -62,11 +62,6 @@ for link, link_indx in graph0.indlinks.iteritems():
 res0 = ue.solver_fw(graph0, full=True)
 delay0 = res0[1][0,0]
 res_bench = ue.solver(graph0)
-# create bookkeeping dict
-bookkeeping = {}
-freeze_support()
-manager = Manager()
-bookkeeping = manager.dict(bookkeeping)
 # correlation
 corr_length = 8.73
 correlation = pybridge.bridge_correlation(bridge_db, corr_length)
@@ -82,7 +77,11 @@ def loop_over_bridges(bridge_indx):
     return pytraffic.delay_samples(*bridge_indx)
 
 if __name__ == '__main__':
-
+    freeze_support()
+    # create bookkeeping dict
+    bookkeeping = {}
+    manager = Manager()
+    bookkeeping = manager.dict(bookkeeping)
 
     start_delta_time = time.time()
     print 'CALC: Parallel version'
