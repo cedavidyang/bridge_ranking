@@ -14,7 +14,7 @@ import copy
 
 import pyDUE.ue_solver as ue
 import pyDUE.draw_graph as d
-#from pyNataf.nataf import semidefinitive
+from pyNataf.robust import semidefinitive
 from pyDUE.util import distance_on_unit_sphere
 from cvxopt import mul
 
@@ -115,12 +115,14 @@ def generate_bridge_safety_deprecated(cs_dist):
 def generate_bridge_safety(cs_dist, bridge_indx=None, correlation=None, nataf=None, corrcoef=0.):
     bridge_smps = []
     bridge_pfs = []
+    if correlation is None:
+        correlation = np.eye(len(cs_dist))
     # generate random field
     if nataf is None:
         norm_cov = correlation
     else:
         norm_cov = nataf(correlation)
-    # norm_cov = semidefinitive(norm_cov)
+    norm_cov = semidefinitive(norm_cov)
     rv = stats.multivariate_normal(mean=np.zeros(len(cs_dist)), cov=norm_cov, allow_singular=True)
     field_smps = stats.norm.cdf(rv.rvs(size=1))
     # generate pf data
