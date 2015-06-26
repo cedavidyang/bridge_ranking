@@ -76,9 +76,10 @@ def nataf(x):
     return natafcurve(x,*popt)
 
 def loop_over_bridges(bridge_indx):
-    indx, smp = pytraffic.delay_samples(nsmp, graph0, delay0, all_capacity, bridge_indx,
-            bridge_db, cs_dist, cap_drop_array, theta, delaytype, correlation, nataf, bookkeeping=bookkeeping)
-    return indx, smp
+    #indx, smp = pytraffic.delay_samples(nsmp, graph0, delay0, all_capacity, bridge_indx,
+            #bridge_db, cs_dist, cap_drop_array, theta, delaytype, correlation, nataf, bookkeeping=bookkeeping)
+    #return indx, smp
+    return pytraffic.delay_samples(*bridge_indx)
 
 if __name__ == '__main__':
 
@@ -87,13 +88,14 @@ if __name__ == '__main__':
     print 'CALC: Parallel version'
     try:
         pool = Pool(processes = 11)
-        res = pool.map_async(loop_over_bridges, np.arange(bridge_db.shape[0])).get(0xFFFF)
+        #res = pool.map_async(loop_over_bridges, np.arange(bridge_db.shape[0])).get(0xFFFF)
         #res = map(loop_over_bridges, np.arange(1))
-        #res = pool.map_async(loop_over_bridges,
-                #itertools.izip(itertools.repeat(nsmp), itertools.repeat(t),
-                    #itertools.repeat(graph), np.arange(bridge_db.shape[0]), itertools.repeat(cs_dist),
-                    #itertools.repeat(cap_drop_array), itertools.repeat(theta),
-                    #itertools.repeat(delaytype), itertools.repeat(bookkeeping))).get(0xFFFF)
+        res = pool.map_async(loop_over_bridges,
+                itertools.izip(itertools.repeat(nsmp), itertools.repeat(graph0), itertools.repeat(delay0),
+                    itertools.repeat(all_capacity), np.arange(bridge_db.shape[0]), itertools.repeat(bridge_db),
+                    itertools.repeat(cs_dist), itertools.repeat(cap_drop_array), itertools.repeat(theta),
+                    itertools.repeat(delaytype), itertools.repeat(correlation), itertools.repeat(nataf),
+                    itertools.repeat(bookkeeping))).get(0xFFFF)
         pool.close()
         pool.join()
     except KeyboardInterrupt:
