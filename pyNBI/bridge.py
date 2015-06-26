@@ -9,6 +9,7 @@ __author__ = 'cedavidyang'
 import psycopg2
 import numpy as np
 import matplotlib.pyplot as plt
+from pyDUE.util import distance_on_unit_sphere
 
 def select_data(db, query_name, query_condition):
     """ get deck condition state data according to query dictionary """
@@ -161,6 +162,28 @@ def transition_matrix(years):
 
     return pmatrix_median
 
+def bridge_correlation(bridge_db, corr_length):
+    def int_to_degree(int_value):
+        degree = np.floor(int_value/1e6)
+        minute = np.floor((int_value - int(1e6)*degree)/1e4)
+        second = int_value % int(1e4) / 100.
+        return degree+minute/60.+second/3600.
+    corr = np.ones((len(bridge_db),len(bridge_db)))
+    for i_indx, bridge_i in enumerate(bridge_db):
+        lati = int_to_degree(bridge_i[1])
+        longi = int_to_degree(bridge_i[2])
+        for j_indx in range(i_indx+1, len(bridge_db)):
+            bridge_j = bridge_db[j_indx]
+            latj = int_to_degree(bridge_j[1])
+            longj = int_to_degree(bridge_j[2])
+            #distance in km
+            dis_ij = distance_on_unit_sphere(lati, longi, latj, longj)*6373.
+            rho_ij = np.exp(-dis_ij**2/corr_length**2)
+            corr[i_indx,j_indx] = rho_ij
+            corr[j_indx,i_indx] = rho_ij
+
+    return corr
+
 if __name__ == '__main__':
     import itertools
     from mpldatacursor import datacursor
@@ -241,3 +264,15 @@ if __name__ == '__main__':
     datacursor(formatter=annotate_text.format,display='multiple', draggable=True,
             bbox=None, fontsize=12,
             arrowprops=dict(arrowstyle='-|>', connectionstyle='arc3', facecolor='k'))
+
+
+    import sys; sys.exit(1)
+    # open databases
+    import psycopg2
+    import pyNBI.traffic as pytraffic
+    conn_gis = psycopg2.connect("dbname='gisdatabase' user='amadeus' host='localhost' password='19881229'")
+    cur_gis = conn_gis.cursor()
+    conn_nbi = psycopg2.connect("dbname='nbi' user='amadeus' host='localhost' password='19881229'")
+    cur_nbi = conn_nbi.cursor()
+    bridge_db = pytraffic.retrieve_bridge_db(cur_gis, cur_nbi)
+    corr = bridge_correlation(bridge_db, 8.73)
