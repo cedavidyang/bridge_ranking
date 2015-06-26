@@ -1,6 +1,6 @@
 import numpy as np
 
-def semidefinitive(correlation, weights=None,tol=1e-6, maxiter=1e4, deftol=None):
+def semidefinitive(correlation, weights=None,tol=1e-6, maxiter=1e4, deftol=0.):
     """ corrUpdate update sample correlation matrix according to algorithm 3.3 in Higham (2002)
     """
     nV = correlation.shape[0]
@@ -33,7 +33,7 @@ def project2u(smpCorr, wMatrix):
 
     return pUcorr
 
-def project2s(smpCorr, wMatrix, deftol=None):
+def project2s(smpCorr, wMatrix, deftol=0.):
 
     wMatrixSqrt = np.sqrt(wMatrix)
     pSpos = get_corrPos( np.dot(np.dot(wMatrixSqrt,smpCorr),wMatrixSqrt),deftol=deftol)
@@ -41,12 +41,11 @@ def project2s(smpCorr, wMatrix, deftol=None):
 
     return pScorr
 
-def get_corrPos(smpCorr, deftol=None):
+def get_corrPos(smpCorr, deftol=0.):
 
     eigValuePos, eigVector = np.linalg.eig(smpCorr)
     eigValue = np.diag(eigValuePos)
-    if deftol is not None: # change 0 eigValue to a small number so that positive-definitive
-        eigValuePos[ eigValuePos<deftol ] = deftol
+    eigValuePos[ eigValuePos<deftol ] = deftol
     eigValueDiagPos = np.diag(eigValuePos)
 
     corrPos = np.dot(np.dot(eigVector,eigValueDiagPos),eigVector.T)
