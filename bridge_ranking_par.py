@@ -136,7 +136,7 @@ if __name__ == '__main__':
         'ranking_LA '+str(datetime.datetime.now()).replace(':', '-'))
     if not os.path.exists(dir_name):
         os.makedirs(dir_name)
-    plt.savefig(os.path.join(dir_name,'/bridge_ranking_LA.eps'))
+    plt.savefig(os.path.join(dir_name,'bridge_ranking_LA.eps'))
     filename=os.path.join(dir_name,'data_shelve.out')
     my_shelf = shelve.open(filename,'n') # 'n' for new
     for key in dir():
