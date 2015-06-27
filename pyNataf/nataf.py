@@ -57,27 +57,6 @@ def nataf_transform_inverse(rho0, xtol=1e-5, rtol=1e-4):
     #rho1 = op.brute(find_root, ((-1., 1.),), Ns=20, disp=True)
     return rho1
 
-def bridge_correlation(bridge_db, corr_length):
-    def int_to_degree(int_value):
-        degree = np.floor(int_value/1e6)
-        minute = np.floor((int_value - int(1e6)*degree)/1e4)
-        second = int_value % int(1e4) / 100.
-        return degree+minute/60.+second/3600.
-    corr = np.ones((len(bridge_db),len(bridge_db)))
-    for i_indx, bridge_i in enumerate(bridge_db):
-        lati = int_to_degree(bridge_i[1])
-        longi = int_to_degree(bridge_i[2])
-        for j_indx in range(i_indx+1, len(bridge_db)):
-            bridge_j = bridge_db[j_indx]
-            latj = int_to_degree(bridge_j[1])
-            longj = int_to_degree(bridge_j[2])
-            #distance in km
-            dis_ij = distance_on_unit_sphere(lati, longi, latj, longj)*6373.
-            rho_ij = np.exp(-dis_ij**2/corr_length**2)
-            corr[i_indx,j_indx] = rho_ij
-            corr[j_indx,i_indx] = rho_ij
-
-    return corr
 
 def natafcurve(x, a, b, c):
     rho1 = x*(a*(x-1.)**3+b*(x-1.)**2+c*(x-1.)+1.)
@@ -108,31 +87,19 @@ if __name__ == '__main__':
 
     # uniform(0,1) to standard normal
     xrv = stats.uniform()
-    rho1_array = np.arange(0., 1.01, 0.01)
+    rho1_array = np.arange(0., 1.0, 0.01)
     rho0_array = []
     for rho1 in rho1_array:
         rho0_array.append(nataf_transform(rho1, xrv))
     rho0_array = np.asarray(rho0_array)
-    plt.plot(rho0_array[:-1], rho1_array[:-1], 'b-')
+    plt.plot(rho0_array, rho1_array, 'b-')
     plt.plot([0.,1.], [0.,1.], 'r-.')
     plt.grid()
     plt.xlabel('Original correlation $\\rho$')
     plt.ylabel('Adjusted correlation $\\rho\'$')
-    # least square
-    xdata = rho0_array[:-1]
-    ydata = rho1_array[:-1]
-    popt, pcov = op.curve_fit(natafcurve, xdata, ydata)
-    plt.plot(xdata, natafcurve(xdata,*popt))
-    np.save('nataf_popt.npy', popt)
-
-
-    import sys; sys.exit(1)
-    # open databases
-    import psycopg2
-    import pyNBI.traffic as pytraffic
-    conn_gis = psycopg2.connect("dbname='gisdatabase' user='amadeus' host='localhost' password='19881229'")
-    cur_gis = conn_gis.cursor()
-    conn_nbi = psycopg2.connect("dbname='nbi' user='amadeus' host='localhost' password='19881229'")
-    cur_nbi = conn_nbi.cursor()
-    bridge_db = pytraffic.retrieve_bridge_db(cur_gis, cur_nbi)
-    corr = bridge_correlation(bridge_db, 8.73)
+    ## least square
+    #xdata = rho0_array[:-1]
+    #ydata = rho1_array[:-1]
+    #popt, pcov = op.curve_fit(natafcurve, xdata, ydata)
+    #plt.plot(xdata, natafcurve(xdata,*popt))
+    #np.save('nataf_popt.npy', popt)
