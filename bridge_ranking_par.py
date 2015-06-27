@@ -65,7 +65,7 @@ res_bench = ue.solver(graph0)
 # correlation
 corr_length = 8.73
 correlation = pybridge.bridge_correlation(bridge_db, corr_length)
-crrelation = None
+correlation = None
 # nataf
 popt = np.load('nataf_popt.npy')
 def nataf(x):
