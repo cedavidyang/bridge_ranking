@@ -65,6 +65,7 @@ res_bench = ue.solver(graph0)
 # correlation
 corr_length = 8.73
 correlation = pybridge.bridge_correlation(bridge_db, corr_length)
+crrelation = None
 # nataf
 popt = np.load('nataf_popt.npy')
 def nataf(x):
@@ -83,8 +84,8 @@ def tmpfunc(args):
 
 if __name__ == '__main__':
     freeze_support()
-    manager = Manager()
-    bookkeeping = manager.dict(bookkeeping)
+    #manager = Manager()
+    #bookkeeping = manager.dict(bookkeeping)
 
     start_delta_time = time.time()
     print 'CALC: Parallel version'
