@@ -280,4 +280,14 @@ def delay_history(nsmp, graph, t, bridge_db, cs_dist, cap_drop_array, theta, del
     return t, total_delay_array
 
 if __name__ == '__main__':
-    pass
+    import matplotlib.pyplot as plt
+    plt.ion()
+    plt.rc('font', family='serif', size=12)
+
+    cs = np.arange(2, 9)
+    re_linear = cs2reliable_linear(cs)
+    re = cs2reliable(cs)
+    plt.plot(cs,re_linear,'b^--')
+    plt.plot(cs,re, 'rv-')
+    plt.xlabel('Condition rating')
+    plt.ylabel('Reliability index')
