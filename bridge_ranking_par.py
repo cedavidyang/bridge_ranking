@@ -69,6 +69,8 @@ correlation = pybridge.bridge_correlation(bridge_db, corr_length)
 popt = np.load('nataf_popt.npy')
 def nataf(x):
     return natafcurve(x,*popt)
+# create bookkeeping dict
+bookkeeping = {}
 
 #def loop_over_bridges(bridge_indx, bookkeeping):
 def loop_over_bridges(bridge_indx):
@@ -81,8 +83,6 @@ def tmpfunc(args):
 
 if __name__ == '__main__':
     freeze_support()
-    # create bookkeeping dict
-    bookkeeping = {}
     manager = Manager()
     bookkeeping = manager.dict(bookkeeping)
 
