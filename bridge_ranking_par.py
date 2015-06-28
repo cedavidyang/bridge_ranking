@@ -71,7 +71,7 @@ res_bench = ue.solver(graph0)
 # correlation
 corr_length = 8.73
 correlation = pybridge.bridge_correlation(bridge_db, corr_length)
-correlation = None
+#correlation = None
 # nataf
 popt = np.load('nataf_popt.npy')
 def nataf(x):
@@ -116,7 +116,7 @@ if __name__ == '__main__':
     print 'DONE',str(datetime.timedelta(seconds=delta_time))
 
     bridge_indx = np.asarray(res, dtype=object)[:,0].astype('int')
-    bridge_risk_data = np.vstack(np.asarray(res, dtype=object)[:,1]).T/3600.
+    bridge_risk_data = np.vstack(np.asarray(res, dtype=object)[:,1]).T
 
     # postprocessing
     import matplotlib.pyplot as plt
