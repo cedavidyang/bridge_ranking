@@ -149,6 +149,7 @@ def generate_bridge_safety(cs_dist, bridge_indx=None, correlation=None, nataf=No
             pf0 = bridge_pfs[indx][1]
             pf1 = (rho*np.sqrt(pfe*(1-pfe))*np.sqrt(pf0*(1-pf0))+pf0*pfe)/pfe
             bridge_pfs[indx][1] = pf1
+        bridge_pfs[bridge_indx][1] = pfe
     # generate bridge state sample
     for bridge_pf, field_smp in zip(bridge_pfs, field_smps):
         smp = bridge_pf[1]<field_smp
