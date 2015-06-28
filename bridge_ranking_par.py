@@ -16,6 +16,7 @@ import pyNBI.traffic as pytraffic
 import pyDUE.generate_graph as g
 import pyDUE.ue_solver as ue
 from pyNataf.nataf import natafcurve
+from pyNBI.risk import compute_cost
 from cvxopt import matrix, mul
 
 from multiprocessing import Pool, Manager, freeze_support
@@ -61,6 +62,11 @@ for link, link_indx in graph0.indlinks.iteritems():
 # initial delay
 res0 = ue.solver_fw(graph0, full=True)
 delay0 = res0[1][0,0]
+length_vector = np.zeros(len(graph0.links.keys()))
+for link_key, link_indx in graph0.indlinks.iteritems():
+    length_vector[link_indx] = graph0.links[link_key].length
+distance0  = (res0[0].T * matrix(length_vector))[0,0]
+cost0 = compute_cost(bridge_db, delay0, distance0, t)
 res_bench = ue.solver(graph0)
 # correlation
 corr_length = 8.73
@@ -75,7 +81,7 @@ bookkeeping = {}
 
 #def loop_over_bridges(bridge_indx, bookkeeping):
 def loop_over_bridges(bridge_indx):
-    indx, smp = pytraffic.delay_samples(nsmp, graph0, delay0, all_capacity, bridge_indx,
+    indx, smp = pytraffic.delay_samples(nsmp, graph0, cost0, all_capacity, t, bridge_indx,
             bridge_db, cs_dist, cap_drop_array, theta, delaytype, correlation, nataf, bookkeeping=bookkeeping)
     return indx, smp
 
@@ -94,7 +100,7 @@ if __name__ == '__main__':
         res = pool.map_async(loop_over_bridges, np.arange(bridge_db.shape[0])).get(0xFFFF)
         #res = map(loop_over_bridges, np.arange(1))
         #res = pool.map_async(loop_over_bridges,
-                #itertools.izip(itertools.repeat(nsmp), itertools.repeat(graph0), itertools.repeat(delay0),
+                #itertools.izip(itertools.repeat(nsmp), itertools.repeat(graph0), itertools.repeat(cost0),
                     #itertools.repeat(all_capacity), np.arange(bridge_db.shape[0]), itertools.repeat(bridge_db),
                     #itertools.repeat(cs_dist), itertools.repeat(cap_drop_array), itertools.repeat(theta),
                     #itertools.repeat(delaytype), itertools.repeat(correlation), itertools.repeat(nataf),
