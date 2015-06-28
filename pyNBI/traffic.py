@@ -14,9 +14,10 @@ import copy
 
 import pyDUE.ue_solver as ue
 import pyDUE.draw_graph as d
-from pyNataf.robust import semidefinitive
 from pyDUE.util import distance_on_unit_sphere
-from cvxopt import mul
+from pyNataf.robust import semidefinitive
+from pyNBI.risk import compute_cost
+from cvxopt import matrix, mul
 
 def retrieve_bridge_db(cur_gis, cur_nbi):
     # get bridge names
@@ -37,8 +38,10 @@ def retrieve_bridge_db(cur_gis, cur_nbi):
             link_pair.append(cur_gis.fetchall()[0])
         links_data.append(link_pair)
     # get bridge condition ratings
-    s='select cast(structure_number_008 as varchar(15)), cast(deck_cond_058 as int), \
+    s='select cast(structure_number_008 as varchar(15)), \
     cast(lat_016 as int), cast(long_017 as int),\
+    cast(structure_len_mt_049 as int), cast(deck_width_mt_052 as int),\
+    cast(deck_cond_058 as int),\
     cast(superstructure_cond_059 as int), cast(substructure_cond_060 as int), \
     cast(detour_kilos_019 as real) \
     from nbi2014.ca2014 where ltrim(rtrim(structure_number_008)) in {} and \
@@ -71,7 +74,7 @@ def condition_distribution(year, bridge_db, pmatrix):
         print 'illegal year of interest, must be even number'
     else:
         indx = int(year)/2
-    for (name, lat, long, deck_cs0, super_cs0, sub_cs0, dummy, dummy) in bridge_db:
+    for (name, lat, long, length, width, deck_cs0, super_cs0, sub_cs0, detour, onlink) in bridge_db:
         # create reliability index distribution of deck
         deck_cs0_array = (cs==deck_cs0).astype('float')
         deck_pk = np.dot(np.linalg.matrix_power(pmatrix.T,indx),deck_cs0_array)
@@ -149,6 +152,7 @@ def generate_bridge_safety(cs_dist, bridge_indx=None, correlation=None, nataf=No
             pf0 = bridge_pfs[indx][1]
             pf1 = (rho*np.sqrt(pfe*(1-pfe))*np.sqrt(pf0*(1-pf0))+pf0*pfe)/pfe
             bridge_pfs[indx][1] = pf1
+        bridge_pfs[bridge_indx][1] = pfe
     # generate bridge state sample
     for bridge_pf, field_smp in zip(bridge_pfs, field_smps):
         smp = bridge_pf[1]<field_smp
@@ -218,7 +222,7 @@ def update_links(graph,fail_bridge_db,initial_link_cap,cap_drop_array,parameters
                 capacity,length,freespeed))
     graph.modify_links_from_lists(to_update_links, delaytype)
 
-def delay_samples(nsmp, graph0, delay0, all_capacity, bridge_indx, bridge_db, cs_dist,
+def delay_samples(nsmp, graph0, cost0, all_capacity, t, bridge_indx, bridge_db, cs_dist,
         cap_drop_array, theta, delaytype, correlation=None, nataf=None, corrcoef=0., bookkeeping={}):
     # start MC
     bridge_risk_array=[]
@@ -232,8 +236,10 @@ def delay_samples(nsmp, graph0, delay0, all_capacity, bridge_indx, bridge_db, cs
         #if tuple(bridge_safety_profile) in bookkeeping.iterkeys():
         #multiprocessing.managers.DictProxy has no iterkeys attribute, see http://bugs.python.org/issue9733
         if tuple(bridge_safety_profile) in iter(bookkeeping.keys()):
-            total_delay = bookkeeping[tuple(bridge_safety_profile)]
-            bridge_risk = bridge_pfs[bridge_indx][-1]*(total_delay-delay0)
+            total_delay = bookkeeping[tuple(bridge_safety_profile)][0]
+            total_distance = bookkeeping[tuple(bridge_safety_profile)][1]
+            cost = compute_cost(bridge_db, total_delay, total_distance, t)
+            bridge_risk = bridge_pfs[bridge_indx][-1]*(cost-cost0)
         else:
             graph = copy.deepcopy(graph0)
             fail_bridges = bridge_db[np.logical_not(bridge_safety_profile.astype(bool))]
@@ -242,8 +248,14 @@ def delay_samples(nsmp, graph0, delay0, all_capacity, bridge_indx, bridge_db, cs
             update_links(graph,fail_bridges,initial_link_cap,cap_drop_after_fail,theta,delaytype)
             res = ue.solver_fw(graph, full=True)
             # save to bookkeeping
-            bookkeeping[tuple(bridge_safety_profile)] = res[1][0,0]
-            bridge_risk = bridge_pfs[bridge_indx][-1]*(res[1][0,0]-delay0)
+            total_delay = res[1][0,0]
+            length_vector = np.zeros(len(graph.links.keys()))
+            for link_key, link_indx in graph.indlinks.iteritems():
+                length_vector[link_indx] = graph.links[link_key].length
+            total_distance = (res[0].T * matrix(length_vector))[0,0]
+            bookkeeping[tuple(bridge_safety_profile)] = [total_delay, total_distance]
+            cost = compute_cost(bridge_db, total_delay, total_distance, t)
+            bridge_risk = bridge_pfs[bridge_indx][-1]*(cost-cost0)
         # add to total delay samples and risk samples
         #total_delay_array.append(total_delay)
         bridge_risk_array.append(bridge_risk)
