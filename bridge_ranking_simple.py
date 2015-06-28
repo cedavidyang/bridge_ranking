@@ -41,13 +41,12 @@ for link, link_indx in graph0.indlinks.iteritems():
     all_capacity[link_indx] = graph0.links[link].capacity
 # initial delay
 res0 = ue.solver_fw(graph0, full=True)
-#delay0 = res0[1][0,0]
-#length_vector = np.zeros(len(graph0.links.keys()))
-#for link_key, link_indx in graph0.indlinks.iteritems():
-    #length_vector[link_indx] = graph0.links[link_key].length
-#distance0  = (res0[0].T * matrix(length_vector))[0,0]
-#cost0 = compute_cost(bridge_db, delay0, distance0, t)
-cost0 = delay0
+delay0 = res0[1][0,0]
+length_vector = np.zeros(len(graph0.links.keys()))
+for link_key, link_indx in graph0.indlinks.iteritems():
+    length_vector[link_indx] = graph0.links[link_key].length
+distance0  = (res0[0].T * matrix(length_vector))[0,0]
+cost0 = compute_cost(bridge_db, delay0, distance0, t)
 res_bench = ue.solver(graph0)
 # create bookkeeping dict
 bookkeeping = {}
