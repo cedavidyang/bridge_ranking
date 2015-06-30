@@ -172,6 +172,7 @@ def braess_paradox():
 
     return graph
 
+
 def test_LA(datapath='', parameters=None, delaytype='None'):
     nodes = np.genfromtxt(datapath+'Data/Network/CSV/test_LA/test_nodes.csv', delimiter = ',', skiprows = 1)
     nodes = nodes[:,1:3]
@@ -223,12 +224,53 @@ def test_LA(datapath='', parameters=None, delaytype='None'):
     return g.create_graph_from_list(nodes, links, delaytype, ODs, 'test L.A.')
 
 
+def LA_county(datapath='', parameters=None, delaytype='None', cur_gis=None):
+    nodes = np.genfromtxt(datapath+'Data/Network/CSV/LA_county/nodes.csv', delimiter = ',', skiprows = 1)
+    nodes = nodes[:,:2]
+    link_data = np.genfromtxt('Data/Network/CSV/LA_county/links.csv', delimiter = ',', skiprows = 1)
+    link_data = np.hstack((link_data[:,[-1]], link_data[:,:-1]))
+
+    if delaytype=='None':
+        links = []
+        speed_limit_freeway = 30.00 #unit: m/s
+        dict_cap2speed ={600:12.5, 1000:16.67, 2000:16.67, 4000:16.67, 5000:16.67, 1500:16.67, 3000:22.22, 6000:22.22, 9000:22.22, 4500:22.22, 7500:22.22, 10500:22.22}
+        for startnode, endnode, category in link_data:
+            arc = distance_on_unit_sphere(nodes[startnode-1][2], nodes[startnode-1][1], nodes[endnode-1][2], nodes[endnode-1][1])
+            if category == 1: ffdelay = arc/speed_limit_freeway
+            if category == 2: ffdelay = arc/16.67
+            if category !=0: links.append((startnode, endnode, 1, ffdelay, None))
+
+    if delaytype=='Polynomial':
+        theta = parameters
+        degree = len(theta)
+        links=[]
+        for link_entry in link_data:
+            startnode = int(link_entry[1])
+            endnode = int(link_entry[2])
+            length = link_entry[3]
+            cap = link_entry[5]
+            freespeed = link_entry[6]
+            ff_d=length/freespeed
+            #change a capacity (slop=1) to simulate an accident
+            #slope= 2000 / cap
+            slope= 1. / cap
+            coef = [ff_d*a*b for a,b in zip(theta, np.power(slope, range(1,degree+1)))]
+            links.append((startnode, endnode, 1, ff_d, (ff_d, slope, coef), cap, length,freespeed))
+
+    ODs = Create_ODs_nodes_unique(nodes, datapath, cur_gis)
+    #ODs = ODs[1:5]
+    #print ODs
+
+    return g.create_graph_from_list(nodes, links, delaytype, ODs, 'LA county')
+
+
 def main():
     theta = matrix([0.0, 0.0, 0.0, 0.15])
     #graph = los_angeles_2(theta, 'Polynomial', 1/15.0)[0]
     #graph = los_angeles_2(theta, 'Polynomial')
     #graph.visualize(True, True, True, True, True)
-    graph = test_LA(theta, 'Polynomial')
+    #graph = test_LA('./', theta, 'Polynomial')
+    graph = LA_county('./', theta, 'Polynomial')
     d.draw(graph, nodes=True)
 
 if __name__ == '__main__':

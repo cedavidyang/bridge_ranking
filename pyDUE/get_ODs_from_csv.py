@@ -4,16 +4,17 @@ Created on Thu Nov 20 16:15:19 2014
 
 @author: hugo
 """
+import sys
 import numpy as np
 import manips as m
 from util import distance_on_unit_sphere, closest_node
 
 
-def Create_ODs_nodes_unique(nodes, datapath=''):
+def Create_ODs_nodes_unique(nodes=None, datapath='', cur_gis=None):
     M=m.Manips(datapath)
     List_TAZ, List_TAZ_ids = M.List_TAZ, M.List_TAZ_ids
     ODs_TAZ = np.asarray(M.Read_TAZ_from_csv())
-    TAZ_2_node = Create_dict_TAZ_2_node(List_TAZ, List_TAZ_ids, nodes)
+    TAZ_2_node = Create_dict_TAZ_2_node(List_TAZ, List_TAZ_ids, nodes, cur_gis)
     ODs_nodes_multiple = []
     for od in ODs_TAZ:
         startnode, endnode = TAZ_2_node[od[0]], TAZ_2_node[od[1]]
@@ -21,11 +22,21 @@ def Create_ODs_nodes_unique(nodes, datapath=''):
     ODs_nodes = Sum_multiple_ODs(ODs_nodes_multiple)
     return np.asarray(ODs_nodes)
 
-def Create_dict_TAZ_2_node(List_TAZ, List_TAZ_ids, nodes):
+def Create_dict_TAZ_2_node(List_TAZ, List_TAZ_ids, nodes=None, cur_gis=None):
     dict = {}
-    for j in range(len(List_TAZ_ids)):
-        i = List_TAZ_ids[j]
-        dict[i] = closest_node(List_TAZ[j][1], List_TAZ[j][2], nodes)
+    for j,i in enumerate(List_TAZ_ids):
+        if cur_gis is not None:
+            s = ("select (select v.id from network.la_voronoi v "
+                        "where ST_contains(v.geom,ST_centroid(t.geom)) limit 1 ) "
+                "from taz.ca_taz_2009 t "
+                " where t.gid = {};").format(i)
+            cur_gis.execute(s)
+            dict[i] = int(cur_gis.fetchall()[0][0])
+        elif nodes is not None:
+            dict[i] = closest_node(List_TAZ[j][1], List_TAZ[j][2], nodes)
+        else:
+            print "nodes or cur_gis must be given"
+            sys.exit(1)
     return dict
 
 def Sum_multiple_ODs(ODs_multiple):

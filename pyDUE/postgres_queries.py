@@ -22,8 +22,8 @@ import psycopg2
 ##For Los Angeles, utm.from_latlon(38, -118) = 11, N
 import csv
 
-def is_in_LA_Box(lat, lng):
-    latmax, latmin, lngmax, lngmin = 33.93685 , 33.81108, -118.17314, -118.37476
+def is_in_LA_Box(lat, lng, box):
+    latmax, latmin, lngmax, lngmin = box
     if (lat < latmax and lat > latmin and lng < lngmax and lng > lngmin): return True
     else : return False
 
@@ -37,7 +37,7 @@ def filter_taz_LA_county(cur):
         list_taz_LA_county.append(int(str(row[0])))
     return list_taz_LA_county
 
-def derive_taz_attributes(cur, list_taz):
+def derive_taz_attributes(cur, list_taz, box=None):
     
     description_taz=[]
     for taz_id in list_taz:
@@ -54,8 +54,9 @@ def derive_taz_attributes(cur, list_taz):
             #pos_centroid_UTM = map(float, pos_centroid_UTM)
             #lat_centroid, lng_centroid = utm.to_latlon(pos_centroid_UTM[0], pos_centroid_UTM[1] , 11, 'N') #The shapefiles are in the UTM "11N" coordinates
     
-        if is_in_LA_Box(lat_centroid, lng_centroid):
-            s='select count(*) from taz.ca_taz_2009 TAZ, network.test_LA_nodes nodes where TAZ.gid = '+str(taz_id)+' AND ST_Contains(TAZ.geom, nodes.geom);'
+        if is_in_LA_Box(lat_centroid, lng_centroid) or box is None:
+            #s='select count(*) from taz.ca_taz_2009 TAZ, network.test_LA_nodes nodes where TAZ.gid = '+str(taz_id)+' AND ST_Contains(TAZ.geom, nodes.geom);'
+            s='select count(*) from taz.ca_taz_2009 TAZ, network.LA_nodes nodes where TAZ.gid = '+str(taz_id)+' AND ST_Contains(TAZ.geom, nodes.geom);'
             cur.execute(s)
             rows=cur.fetchall()
             for row in rows:
@@ -78,6 +79,7 @@ def write_TAZ_file_as_csv(description_taz, datapath=''):
             c.writerow(row)
    
 def main():
+    box = [33.93685 , 33.81108, -118.17314, -118.37476]
     #Put your connection IDs here, and modify the next line
     conn = psycopg2.connect("dbname='gisdatabase' user='amadeus' host='localhost' password=''")
     cur = conn.cursor()

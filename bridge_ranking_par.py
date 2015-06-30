@@ -44,7 +44,8 @@ else:
 #create graph
 theta = matrix([0.0,0.0,0.0,0.15])
 delaytype = 'Polynomial'
-graph0 = g.test_LA(parameters=theta,delaytype=delaytype)
+#graph0 = g.test_LA(parameters=theta,delaytype=delaytype)
+graph0 = g.LA_county(parameters=theta,delaytype=delaytype, cur_gis = cur_gis)
 nlink = len(graph0.links)
 
 # capacity drop

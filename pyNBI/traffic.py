@@ -21,7 +21,8 @@ from cvxopt import matrix, mul
 
 def retrieve_bridge_db(cur_gis, cur_nbi):
     # get bridge names
-    s='select structure_, link_num from network.test_LA_bridges;'
+    #s='select structure_, link_num from network.test_LA_bridges;'
+    s='select structure_, onlinks from network.LA_bridges;'
     cur_gis.execute(s)
     bridge_data = cur_gis.fetchall()
     bridge_names = np.asarray(bridge_data,dtype=object)[:,0].flatten()
@@ -30,10 +31,13 @@ def retrieve_bridge_db(cur_gis, cur_nbi):
     cur_gis.execute(s)
     bridge_data = cur_gis.fetchall()
     links_data = []
+    #for bridge_link_pair in bridge_links:
     for bridge_link_pair in bridge_links:
+        bridge_link_pair = np.asarray(bridge_link_pair.split(','), dtype=int)
         link_pair = []
         for bridge_link in bridge_link_pair:
-            s='select fromID, toID, 1 from network.test_LA_links where ID = {};'.format(bridge_link)
+            #s='select fromID, toID, 1 from network.test_LA_links where ID = {};'.format(bridge_link)
+            s='select fromID, toID, 1 from network.LA_links where ID = {};'.format(bridge_link)
             cur_gis.execute(s)
             link_pair.append(cur_gis.fetchall()[0])
         links_data.append(link_pair)
