@@ -12,7 +12,7 @@ from pyDUE.generate_graph import LA_county
 from cvxopt import matrix, mul
 
 def assign_traffic(algorithm='FW'):
-    conn_gis = psycopg2.connect("dbname='gisdatabase' user='amadeus' host='localhost' password=''")
+    conn_gis = psycopg2.connect("dbname='gisdatabase' user='amadeus' host='localhost' password='19881229'")
     cur_gis = conn_gis.cursor()
     # generate the graph
     theta = matrix([0.0, 0.0, 0.0, 0.15])
