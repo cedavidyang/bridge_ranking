@@ -45,6 +45,9 @@ Setup 2: create nodes and links files (db tables and csv files)
    PostGIS as *bridges*
 
    ```sql
+   -- recond_type_005a = 1 for bridges ON highways
+   -- route_prefix_005b = 1 or 2 for interstate and numbered highways
+   -- super- or sub-structure condition rating should be equal to less than 6
    "recond_type_005a" = '1' and
    "route_prefix_005b" in ('1', '2') and
    ("superstructure_cond_059" in ('0', '1', '2', '3', '4', '5', '6') or
@@ -52,3 +55,16 @@ Setup 2: create nodes and links files (db tables and csv files)
    ```
 
 10. Update table bridges with *onlink* data  by running bridgeonlink.sql
+
+Setup 3: update python files with directory paths
+-----
+Use ```basg grep -nr -exclude-dir ./.git 'xxx' ./``` to make sure all directory
+is correct
+
+
+Setup 4: run python scripts
+-----
+Run **ue_LA_county.py** for traffic assignment without bridges
+
+Run **bridge_ranking_par.py** for Monte Carlo simulation. Make sure that the
+process number and sample number have been correctly set
