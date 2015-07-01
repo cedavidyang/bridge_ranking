@@ -250,7 +250,7 @@ def LA_county(datapath='', parameters=None, delaytype='None', cur_gis=None):
             length = link_entry[3]
             cap = link_entry[5]
             freespeed = link_entry[6]
-            ff_d=length/freespeed
+            ff_d=length*1000./freespeed
             #change a capacity (slop=1) to simulate an accident
             #slope= 2000 / cap
             slope= 1. / cap
@@ -258,8 +258,7 @@ def LA_county(datapath='', parameters=None, delaytype='None', cur_gis=None):
             links.append((startnode, endnode, 1, ff_d, (ff_d, slope, coef), cap, length,freespeed))
 
     ODs = Create_ODs_nodes_unique(nodes, datapath, cur_gis)
-    #ODs = ODs[1:5]
-    #print ODs
+    ODs = ODs[ODs[:,-1]>np.sum(ODs[:,-1])/1000.,:]
 
     return g.create_graph_from_list(nodes, links, delaytype, ODs, 'LA county')
 

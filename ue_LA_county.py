@@ -22,7 +22,8 @@ def assign_traffic(algorithm='FW'):
     graph = LA_county(datapath='./', parameters=theta,delaytype='Polynomial', cur_gis=cur_gis)
     d.draw(graph)
     # traffic assignment
-    l,x = ue.solver(graph, update=True, full=True)
+    #l,x = ue.solver(graph, update=True, full=True)
+    l = ue.solver(graph, update=True)
     d.draw_delays(graph, l)
     delay = np.asarray([link.delay for link in graph.links.itervalues()])
     ffdelay = np.asarray([link.ffdelay for link in graph.links.itervalues()])
