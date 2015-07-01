@@ -23,7 +23,7 @@ def assign_traffic(algorithm='FW'):
     d.draw(graph)
     # traffic assignment
     #l,x = ue.solver(graph, update=True, full=True)
-    l = ue.solver(graph, update=True)
+    l = ue.solver_fw(graph, update=True)
     d.draw_delays(graph, l)
     delay = np.asarray([link.delay for link in graph.links.itervalues()])
     ffdelay = np.asarray([link.ffdelay for link in graph.links.itervalues()])
