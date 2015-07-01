@@ -258,7 +258,7 @@ def LA_county(datapath='', parameters=None, delaytype='None', cur_gis=None):
             links.append((startnode, endnode, 1, ff_d, (ff_d, slope, coef), cap, length,freespeed))
 
     ODs = Create_ODs_nodes_unique(nodes, datapath, cur_gis)
-    ODs = ODs[ODs[:,-1]>np.sum(ODs[:,-1])/1000.,:]
+    #ODs = ODs[ODs[:,-1]>np.sum(ODs[:,-1])/1000.,:]
 
     return g.create_graph_from_list(nodes, links, delaytype, ODs, 'LA county')
 
