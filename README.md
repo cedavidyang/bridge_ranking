@@ -1,8 +1,8 @@
 Risk-based Ranking of Highway Bridges
 ==========================
 
-| Date:        | Jul 2015                                                  |
 | ------------ | --------------------------------------------------------- |
+| Date:        | Jul 2015                                                  |
 | Author(s):   | David Yang                                                |
 | Contact:     | ynyang1988@gmail.com                                      |
 | Web site:    | https://github.com/cedavidyang/bridge_ranking             |
