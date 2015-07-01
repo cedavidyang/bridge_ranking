@@ -68,7 +68,7 @@ for link_key, link_indx in graph0.indlinks.iteritems():
     length_vector[link_indx] = graph0.links[link_key].length
 distance0  = (res0[0].T * matrix(length_vector))[0,0]
 cost0 = compute_cost(bridge_db, delay0, distance0, t)
-res_bench = ue.solver(graph0)
+#res_bench = ue.solver(graph0)
 # correlation
 corr_length = 8.73
 correlation = pybridge.bridge_correlation(bridge_db, corr_length)
