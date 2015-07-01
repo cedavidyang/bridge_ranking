@@ -27,7 +27,6 @@ def assign_traffic(algorithm='FW'):
     d.draw_delays(graph, l)
     delay = np.asarray([link.delay for link in graph.links.itervalues()])
     ffdelay = np.asarray([link.ffdelay for link in graph.links.itervalues()])
-    import ipdb; ipdb.set_trace() # BREAKPOINT
     edge_ratios = delay/ffdelay
     #print max(mul(l,graph.get_slopes()))
     #print edge_ratios
