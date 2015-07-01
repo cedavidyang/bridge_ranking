@@ -12,7 +12,7 @@ from pyDUE.generate_graph import LA_county
 from cvxopt import matrix, mul
 
 import time
-import datatime
+import datetime
 
 def assign_traffic(algorithm='FW'):
     conn_gis = psycopg2.connect("dbname='gisdatabase' user='amadeus' host='localhost' password='19881229'")
