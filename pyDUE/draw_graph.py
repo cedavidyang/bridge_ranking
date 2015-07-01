@@ -101,14 +101,17 @@ def draw_delays(graph, linkflows=None, G=None, width=7, alpha=0.5, levels=[1.5, 
     edges = [[link.startnode, link.endnode] for link in graph.links.itervalues()]
     delay = np.asarray([link.delay for link in graph.links.itervalues()])
     ffdelay = np.asarray([link.ffdelay for link in graph.links.itervalues()])
-    edge_ratios = delay/ffdelay
-    print edge_ratios
+    #edge_ratios = delay/ffdelay
+    link_cap = np.asarray([link.capacity for link in graph.links.values()])
+    link_flow = np.asarray([link.flow for link in graph.links.values()])
+    edge_ratios = link_flow/link_cap
     cs=nx.draw_networkx_edges(G, pos, edgelist=edges, width=width, alpha=alpha,
-            edge_color=edge_ratios, edge_cmap=plt.cm.bwr,arrows=False)
+            edge_color=edge_ratios, edge_cmap=plt.cm.bwr, edge_vmin=None, edge_vmax=None, arrows=False)
 
     fig = plt.gcf()
     ax = plt.gca()
+    plt.subplots_adjust(left=0, right=1, top=1, bottom=0)
     fig.patch.set_visible(False)
     ax.axis('off')
-    plt.colorbar(cs, orientation='horizontal',shrink=0.8)
+    cb = plt.colorbar(cs, shrink=0.8)
     plt.show()
