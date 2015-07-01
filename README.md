@@ -1,17 +1,13 @@
 Risk-based Ranking of Highway Bridges
 ==========================
-    | Date:        | Jul 2015                                                  |
-    | ------------ | --------------------------------------------------------- |
-    | Author(s):   | David Yang                                                |
-    | Contact:     | ynyang1988@gmail.com                                      |
-    | Web site:    | https://github.com/cedavidyang/bridge_ranking             |
-    | License:     | Software is released under the GNU General Public Licence.|
-    | Version:     | 0.0.1                                                     |
 
-| First Header  | Second Header |
-| ------------- | ------------- |
-| Content Cell  | Content Cell  |
-| Content Cell  | Content Cell  |
+| Date:        | Jul 2015                                                  |
+| ------------ | --------------------------------------------------------- |
+| Author(s):   | David Yang                                                |
+| Contact:     | ynyang1988@gmail.com                                      |
+| Web site:    | https://github.com/cedavidyang/bridge_ranking             |
+| License:     | Software is released under the GNU General Public Licence.|
+| Version:     | 0.0.1                                                     |
 
 Setup 1: GIS data to PostGIS database and CSV data
 -----
