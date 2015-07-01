@@ -27,9 +27,10 @@ def assign_traffic(algorithm='FW'):
     d.draw_delays(graph, l)
     delay = np.asarray([link.delay for link in graph.links.itervalues()])
     ffdelay = np.asarray([link.ffdelay for link in graph.links.itervalues()])
+    import ipdb; ipdb.set_trace() # BREAKPOINT
     edge_ratios = delay/ffdelay
     #print max(mul(l,graph.get_slopes()))
-    print edge_ratios
+    #print edge_ratios
     print 'cost UE:', sum([link.delay*link.flow for link in graph.links.values()])
     #l2, x2 = ue.solver(graph, update=True, full=True, SO=True)
     #d.draw_delays(graph, x2)
