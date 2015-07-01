@@ -16,7 +16,7 @@ Bridge data can be downloaded from http://www.fhwa.dot.gov/bridge/nbi/ascii.cfm
 2. Instructions for importing shapefiles to PostGIS database and export to CSV data can be found on https://github.com/megacell/user-equilibrium-synthetic
 
 
-Setup 2: create nodes and links files (db tables and csv files)
+Setup 2: create nodes, links, bridge and voronoi files (db tables and csv files)
 -----
 1. Import highways (using filter) and taz shapefiles (and clip rectangular if
    applicable) into QGIS
@@ -55,6 +55,8 @@ Setup 2: create nodes and links files (db tables and csv files)
    ```
 
 10. Update table bridges with *onlink* data  by running bridgeonlink.sql
+
+NOTE: SRID should be the same for all the geometric manipulations
 
 Setup 3: update python files with directory paths
 -----
