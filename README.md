@@ -75,6 +75,9 @@ are corrected
 
 Setup 4: run python scripts
 -----
+
+Run **pyDUE/postgres_queries.py** to create ```./Data/TAZ/Description_TAZ.csv```
+
 Run **ue_LA_county.py** for traffic assignment without bridges
 
 Run **bridge_ranking_par.py** for Monte Carlo simulation. Make sure that the
