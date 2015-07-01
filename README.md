@@ -58,7 +58,7 @@ Setup 2: create nodes and links files (db tables and csv files)
 
 Setup 3: update python files with directory paths
 -----
-Use ```basg grep -nr -exclude-dir ./.git 'xxx' ./``` to make sure all directory
+Use ```bash grep -nr -exclude-dir ./.git 'xxx' ./``` to make sure all directory
 is correct
 
 
