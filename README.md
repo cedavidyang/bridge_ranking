@@ -44,7 +44,7 @@ Setup 2: create nodes, links, bridge and voronoi files (db tables and csv files)
 6. Run motorway2link.sql to create a table of *links*
 
 7. Create a layer of voronoi polygons of nodes (QGIS->Geometry tools->Voronoi
-   polygons), import the shapefile to PostGIS
+   polygons), import the shapefile to PostGIS. Use buffer to overlap all taz
 
 8. Import bridge data into QGIS, two numerical attributes corresponding to
    longitudes and latitudes of bridges should be firstly converted from text data and added to the database
