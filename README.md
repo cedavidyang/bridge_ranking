@@ -44,9 +44,11 @@ Setup 2: create nodes and links files (db tables and csv files)
    with the following criteria, save as shapefile and import the shapefile into
    PostGIS as *bridges*
 
+   ```sql
    "recond_type_005a" = '1' and
    "route_prefix_005b" in ('1', '2') and
    ("superstructure_cond_059" in ('0', '1', '2', '3', '4', '5', '6') or
-   "substructure_cond_060" in ('0', '1', '2', '3', '4', '5', '6')
+   "substructure_cond_060" in ('0', '1', '2', '3', '4', '5', '6'))
+   ```
 
 10. Update table bridges with *onlink* data  by running bridgeonlink.sql
