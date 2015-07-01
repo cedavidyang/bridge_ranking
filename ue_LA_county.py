@@ -11,6 +11,9 @@ import pyDUE.draw_graph as d
 from pyDUE.generate_graph import LA_county
 from cvxopt import matrix, mul
 
+import time
+import datatime
+
 def assign_traffic(algorithm='FW'):
     conn_gis = psycopg2.connect("dbname='gisdatabase' user='amadeus' host='localhost' password='19881229'")
     cur_gis = conn_gis.cursor()
@@ -35,4 +38,9 @@ def assign_traffic(algorithm='FW'):
 
 
 if __name__ == '__main__':
+    start_delta_time = time.time()
+    print 'CALC: test'
     assign_traffic()
+    delta_time = time.time() - start_delta_time
+    print 'DONE',str(datetime.timedelta(seconds=delta_time))
+
