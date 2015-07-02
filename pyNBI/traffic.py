@@ -74,6 +74,7 @@ def cs2reliable(cs):
 def condition_distribution(year, bridge_db, pmatrix):
     cs_dist = []
     cs = np.arange(8,0,-1)
+    pmatrix = pmatrix.item()
     if int(year) % 2 !=0:
         print 'illegal year of interest, must be even number'
     else:
@@ -81,15 +82,15 @@ def condition_distribution(year, bridge_db, pmatrix):
     for (name, lat, long, length, width, deck_cs0, super_cs0, sub_cs0, detour, onlink) in bridge_db:
         # create reliability index distribution of deck
         deck_cs0_array = (cs==deck_cs0).astype('float')
-        deck_pk = np.dot(np.linalg.matrix_power(pmatrix.T,indx),deck_cs0_array)
+        deck_pk = np.dot(np.linalg.matrix_power(pmatrix['deck'].T,indx),deck_cs0_array)
         deck_cs_dist = stats.rv_discrete(name='deck_cs_dist', values=(cs,deck_pk))
         # create super
         super_cs0_array = (cs==super_cs0).astype('float')
-        super_pk = np.dot(np.linalg.matrix_power(pmatrix.T,indx),super_cs0_array)
+        super_pk = np.dot(np.linalg.matrix_power(pmatrix['super'].T,indx),super_cs0_array)
         super_cs_dist = stats.rv_discrete(name='super_cs_dist', values=(cs,super_pk))
         # create sub
         sub_cs0_array = (cs==sub_cs0).astype('float')
-        sub_pk = np.dot(np.linalg.matrix_power(pmatrix.T,indx),sub_cs0_array)
+        sub_pk = np.dot(np.linalg.matrix_power(pmatrix['sub'].T,indx),sub_cs0_array)
         sub_cs_dist = stats.rv_discrete(name='sub_cs_dist', values=(cs,sub_pk))
 
         cs_dist.append( (name, deck_cs_dist, super_cs_dist, sub_cs_dist) )

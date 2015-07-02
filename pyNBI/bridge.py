@@ -85,9 +85,9 @@ def transition_CS(year, component='deck'):
     if component == 'deck':
         query_name = 'T.STRUCTURE_NUMBER_008, T.DATE_OF_INSPECT_090, T.DECK_COND_058'
     elif 'super' in component:
-        query_name = 'T.STRUCTURE_NUMBER_008, T.DATE_OF_INSPECT_090, T.SUPERSTRUCTURE_COND_058'
+        query_name = 'T.STRUCTURE_NUMBER_008, T.DATE_OF_INSPECT_090, T.SUPERSTRUCTURE_COND_059'
     elif 'sub' in component:
-        query_name = 'T.STRUCTURE_NUMBER_008, T.DATE_OF_INSPECT_090, T.SUBSTRUCTURE_COND_058'
+        query_name = 'T.STRUCTURE_NUMBER_008, T.DATE_OF_INSPECT_090, T.SUBSTRUCTURE_COND_060'
     # select specific bridge types
     query_condition = 'T.STRUCTURE_KIND_043a NOT IN (\'7\', \'8\', \'9\') '
     # record type = '1'
@@ -147,10 +147,10 @@ def transition_CS(year, component='deck'):
 
     return p
 
-def transition_matrix(years):
+def transition_matrix(years, component='deck'):
     pmatrix_array = []
     for yr in years:
-        pmatrix = transition_CS(yr, component='deck')
+        pmatrix = transition_CS(yr, component=component)
         pmatrix_array.append(pmatrix)
     pmatrix_array = np.array(pmatrix_array)
     pmatrix_median = np.zeros((8,8))
@@ -204,8 +204,6 @@ if __name__ == '__main__':
         #pmatrix = transition_CS(yr, component='deck')
         #pmatrix_array.append(pmatrix)
     #pmatrix_array = np.array(pmatrix_array)
-    ## postprocessing
-    #for i,ms in zip(np.arange(6,1,-1), itertools.cycle('o>^+*d')):
         #labeltxt = '$a_{{ 7{} }}$'.format(i)
         #plt.plot(time_span, pmatrix_array[:,8-7,8-i], marker=ms, label=labeltxt)
     #plt.xlabel('Year', fontsize=12)
@@ -217,8 +215,11 @@ if __name__ == '__main__':
     ##plt.plot(time_span, pmatrix_array[:,8-7,8-7], 'o-')
     ##plt.show()
 
-    ## median transition matrix
-    #pmatrix = transition_matrix(np.arange(1992,2013,dtype='int'))
+    # median transition matrix
+    pmatrix_deck = transition_matrix(np.arange(1992,2013,dtype='int'), component='deck')
+    pmatrix_super = transition_matrix(np.arange(1992,2013,dtype='int'), component='superstructure')
+    pmatrix_sub = transition_matrix(np.arange(1992,2013,dtype='int'), component='substructure')
+    np.save('pmatrix.npy', {'deck': pmatrix_deck, 'super': pmatrix_super, 'sub': pmatrix_sub})
 
     ## cs evolution
     #pmatrix = np.load('pmatrix.npy')
@@ -241,38 +242,26 @@ if __name__ == '__main__':
             #bbox=None, fontsize=12,
             #arrowprops=dict(arrowstyle='-|>', connectionstyle='arc3', facecolor='k'))
 
-    # reliability evolution
-    pmatrix = np.load('pmatrix.npy')
-    cs0 = np.array([1, 0, 0, 0, 0, 0, 0, 0], dtype='float')
-    service_life = np.arange(0, 102, 2)
-    cs_array = []
-    for indx, year in enumerate(service_life):
-        cs = np.dot(np.linalg.matrix_power(pmatrix.T,indx),cs0)
-        cs_array.append(cs)
-    cs_array = np.array(cs_array)
-    cs_mean_array = np.dot(cs_array, np.array([8,7,6,5,4,3,2,1]))
-    cs2_mean_array = np.dot(cs_array, np.array([8,7,6,5,4,3,2,1])**2)
-    cs_std_array = np.sqrt(cs2_mean_array-cs_mean_array**2)
-    beta_mean_array = (4.7-3.0)/(8-2)*(cs_mean_array-8)+4.7
-    beta_std_array = (4.7-3.0)/(8-2)*cs_std_array
-    plt.plot(service_life, beta_mean_array, 'b-', label='$\\mu_{\\beta}$')
-    plt.plot(service_life, beta_mean_array+beta_std_array, 'r--', label='$\\pm \\sigma_{\\beta}$')
-    plt.plot(service_life, beta_mean_array-beta_std_array, 'r--', label='$\\pm \\sigma_{\\beta}$')
-    plt.xlabel('Year', fontsize=12)
-    plt.ylabel('Annual reliability index')
-    annotate_text = '{label}'
-    datacursor(formatter=annotate_text.format,display='multiple', draggable=True,
-            bbox=None, fontsize=12,
-            arrowprops=dict(arrowstyle='-|>', connectionstyle='arc3', facecolor='k'))
-
-
-    import sys; sys.exit(1)
-    # open databases
-    import psycopg2
-    import pyNBI.traffic as pytraffic
-    conn_gis = psycopg2.connect("dbname='gisdatabase' user='amadeus' host='localhost' password='19881229'")
-    cur_gis = conn_gis.cursor()
-    conn_nbi = psycopg2.connect("dbname='nbi' user='amadeus' host='localhost' password='19881229'")
-    cur_nbi = conn_nbi.cursor()
-    bridge_db = pytraffic.retrieve_bridge_db(cur_gis, cur_nbi)
-    corr = bridge_correlation(bridge_db, 8.73)
+    ## reliability evolution
+    #pmatrix = np.load('pmatrix.npy')
+    #cs0 = np.array([1, 0, 0, 0, 0, 0, 0, 0], dtype='float')
+    #service_life = np.arange(0, 102, 2)
+    #cs_array = []
+    #for indx, year in enumerate(service_life):
+        #cs = np.dot(np.linalg.matrix_power(pmatrix.T,indx),cs0)
+        #cs_array.append(cs)
+    #cs_array = np.array(cs_array)
+    #cs_mean_array = np.dot(cs_array, np.array([8,7,6,5,4,3,2,1]))
+    #cs2_mean_array = np.dot(cs_array, np.array([8,7,6,5,4,3,2,1])**2)
+    #cs_std_array = np.sqrt(cs2_mean_array-cs_mean_array**2)
+    #beta_mean_array = (4.7-3.0)/(8-2)*(cs_mean_array-8)+4.7
+    #beta_std_array = (4.7-3.0)/(8-2)*cs_std_array
+    #plt.plot(service_life, beta_mean_array, 'b-', label='$\\mu_{\\beta}$')
+    #plt.plot(service_life, beta_mean_array+beta_std_array, 'r--', label='$\\pm \\sigma_{\\beta}$')
+    #plt.plot(service_life, beta_mean_array-beta_std_array, 'r--', label='$\\pm \\sigma_{\\beta}$')
+    #plt.xlabel('Year', fontsize=12)
+    #plt.ylabel('Annual reliability index')
+    #annotate_text = '{label}'
+    #datacursor(formatter=annotate_text.format,display='multiple', draggable=True,
+            #bbox=None, fontsize=12,
+            #arrowprops=dict(arrowstyle='-|>', connectionstyle='arc3', facecolor='k'))
