@@ -97,7 +97,7 @@ if __name__ == '__main__':
     start_delta_time = time.time()
     print 'CALC: Parallel version'
     try:
-        pool = Pool(processes = 30)
+        pool = Pool(processes = 60)
         res = pool.map_async(loop_over_bridges, np.arange(bridge_db.shape[0])).get(0xFFFFFFFF)
         #res = map(loop_over_bridges, np.arange(1))
         #res = pool.map_async(loop_over_bridges,
