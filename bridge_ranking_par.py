@@ -47,6 +47,8 @@ delaytype = 'Polynomial'
 #graph0 = g.test_LA(parameters=theta,delaytype=delaytype)
 graph0 = g.LA_county(parameters=theta,delaytype=delaytype, cur_gis = cur_gis)
 nlink = len(graph0.links)
+conn_gis.close()
+conn_nbi.close()
 
 # capacity drop
 cap_drop_array = np.ones(np.asarray(bridge_db, dtype=object).shape[0])*0.1
