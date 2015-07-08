@@ -84,9 +84,9 @@ if __name__ == '__main__':
     start_delta_time = time.time()
     print 'CALC: Parallel version'
     try:
-        pool = Pool(processes = 30)
+        pool = Pool(processes = 3)
         #res = pool.map_async(loop_over_bridges, np.arange(bridge_db.shape[0])).get(0xFFFFFFFF)
-        res = pool.map_async(loop_over_bridges, np.arange(30)).get(0xFFFFFFFF)
+        res = pool.map_async(loop_over_bridges, np.arange(3)).get(0xFFFFFFFF)
         #res = map(loop_over_bridges, np.arange(1))
         #res = pool.map_async(loop_over_bridges,
                 #itertools.izip(itertools.repeat(nsmp), itertools.repeat(graph0), itertools.repeat(cost0),
@@ -107,7 +107,7 @@ if __name__ == '__main__':
 
     start_delta_time = time.time()
     print 'CALC: Series version'
-    res = map(loop_over_bridges, np.arange(30))
+    res = map(loop_over_bridges, np.arange(3))
     delta_time = time.time() - start_delta_time
     print 'DONE',str(datetime.timedelta(seconds=delta_time))
 
