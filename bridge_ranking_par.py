@@ -116,6 +116,13 @@ if __name__ == '__main__':
         print "Caught KeyboardInterrupt, terminating workers"
         pool.terminate()
         pool.join()
+        sys.exit(1)
+    delta_time = time.time() - start_delta_time
+    print 'DONE',str(datetime.timedelta(seconds=delta_time))
+
+    start_delta_time = time.time()
+    print 'CALC: Series version'
+    res = map(loop_over_bridges, np.arange(1))
     delta_time = time.time() - start_delta_time
     print 'DONE',str(datetime.timedelta(seconds=delta_time))
 
