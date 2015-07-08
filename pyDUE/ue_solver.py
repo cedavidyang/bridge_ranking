@@ -457,7 +457,7 @@ if __name__ == '__main__':
     print 'cvxopt: {} loops, total time {}'.format(num, datetime.timedelta(seconds=delta_time))
     # In order to check efficiency of FW-LP, FW-AON, MSA-LP, FW-AON
     # FW to MSA: change step definition: line search to 1./(k+2.)
-    # LP to AON: change solver_kernal in loop to solver_kernal_deprecated
+    # AON to LP: change solver_kernal in loop to solver_kernal_deprecated
     starttime = time.time()
     for i in xrange(num):
         f2 = solver_fw(graph, verbose=False, e=1e-7)
