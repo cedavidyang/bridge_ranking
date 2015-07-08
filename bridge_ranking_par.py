@@ -24,33 +24,28 @@ import itertools
 
 import time
 import datetime
+import shelve
 
 # global variables for parallel computing... stupid multiprocessing in Python
 
-# open databases
-conn_gis = psycopg2.connect("dbname='gisdatabase' user='amadeus' host='localhost' password='19881229'")
-cur_gis = conn_gis.cursor()
-conn_nbi = psycopg2.connect("dbname='nbi' user='amadeus' host='localhost' password='19881229'")
-cur_nbi = conn_nbi.cursor()
+# to restore workspace, uncommon the follows
+filename = os.path.join(os.path.abspath('./'), 'Data', 'Python', 'metadata.out')
+my_shelf = shelve.open(filename)
+for key in my_shelf:
+    globals()[key]=my_shelf[key]
+my_shelf.close()
 
-# retrieve initial condition states of bridges
-bridge_db = pytraffic.retrieve_bridge_db(cur_gis, cur_nbi)
-# get transition matrix
-if os.path.isfile('./pmatrix.npy'):
-    pmatrix = np.load('pmatrix.npy')
-else:
-    pmatrix = pybridge.transition_matrix()
+#bridge_db = metadata['bridge_db']
+#pmatrix = metadata['pmatrix']
+#theta = metadata['theta']
+#delaytype = metadata['delaytype']
+#graph0 = metadata['graph0']
+#all_capacity = metadata['all_capacity']
+#length_vector = metadata['length_vector']
+#popt = metadata['nataf_popt']
+#res0 = metadata['res0']
 
-#create graph
-theta = matrix([0.0,0.0,0.0,0.15])
-delaytype = 'Polynomial'
-#graph0 = g.test_LA(parameters=theta,delaytype=delaytype)
-graph0 = g.LA_county(parameters=theta,delaytype=delaytype, cur_gis = cur_gis)
 nlink = len(graph0.links)
-conn_gis.close()
-conn_nbi.close()
-
-# capacity drop
 cap_drop_array = np.ones(np.asarray(bridge_db, dtype=object).shape[0])*0.1
 # time of interest
 t = 50
@@ -58,16 +53,7 @@ t = 50
 cs_dist = pytraffic.condition_distribution(t, bridge_db, pmatrix)
 # number of smps
 nsmp = int(1)
-# initial capacity without failed bridges
-all_capacity = np.zeros(nlink)
-for link, link_indx in graph0.indlinks.iteritems():
-    all_capacity[link_indx] = graph0.links[link].capacity
-# initial delay
-res0 = ue.solver_fw(graph0, full=True)
 delay0 = res0[1][0,0]
-length_vector = np.zeros(len(graph0.links.keys()))
-for link_key, link_indx in graph0.indlinks.iteritems():
-    length_vector[link_indx] = graph0.links[link_key].length
 distance0  = (res0[0].T * matrix(length_vector))[0,0]
 cost0 = social_cost(delay0, distance0, t)
 #res_bench = ue.solver(graph0)
@@ -76,7 +62,6 @@ corr_length = 8.73
 correlation = pybridge.bridge_correlation(bridge_db, corr_length)
 correlation = None
 # nataf
-popt = np.load('nataf_popt.npy')
 def nataf(x):
     return natafcurve(x,*popt)
 # create bookkeeping dict
