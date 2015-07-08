@@ -34,7 +34,7 @@ def loop_over_bridges(bridge_indx):
     filename = os.path.join(os.path.abspath('./'), 'Data', 'Python', 'metadata.out')
     my_shelf = shelve.open(filename)
     for key in my_shelf:
-        vars()[key]=my_shelf[key]
+        globals()[key]=my_shelf[key]
     my_shelf.close()
 
     #bridge_db = metadata['bridge_db']
