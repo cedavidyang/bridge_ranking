@@ -16,7 +16,7 @@ import pyDUE.ue_solver as ue
 import pyDUE.draw_graph as d
 from pyDUE.util import distance_on_unit_sphere
 from pyNataf.robust import semidefinitive
-from pyNBI.risk import compute_cost
+from pyNBI.risk import bridge_cost, social_cost
 from cvxopt import matrix, mul
 
 def retrieve_bridge_db(cur_gis, cur_nbi):
@@ -243,8 +243,9 @@ def delay_samples(nsmp, graph0, cost0, all_capacity, t, bridge_indx, bridge_db, 
         if tuple(bridge_safety_profile) in iter(bookkeeping.keys()):
             total_delay = bookkeeping[tuple(bridge_safety_profile)][0]
             total_distance = bookkeeping[tuple(bridge_safety_profile)][1]
-            cost = compute_cost(bridge_db, total_delay, total_distance, t)
-            bridge_risk = bridge_pfs[bridge_indx][-1]*(cost-cost0)
+            cost = social_cost(bridge_db, total_delay, total_distance, t)
+            bridge_cost = bridge_cost(bridge_db, t)
+            bridge_risk = bridge_pfs[bridge_indx][-1]*(bridge_cost+(cost-cost0))
         else:
             graph = copy.deepcopy(graph0)
             fail_bridges = bridge_db[np.logical_not(bridge_safety_profile.astype(bool))]
@@ -259,8 +260,9 @@ def delay_samples(nsmp, graph0, cost0, all_capacity, t, bridge_indx, bridge_db, 
                 length_vector[link_indx] = graph.links[link_key].length
             total_distance = (res[0].T * matrix(length_vector))[0,0]
             bookkeeping[tuple(bridge_safety_profile)] = [total_delay, total_distance]
-            cost = compute_cost(bridge_db, total_delay, total_distance, t)
-            bridge_risk = bridge_pfs[bridge_indx][-1]*(cost-cost0)
+            cost = social_cost(bridge_db, total_delay, total_distance, t)
+            bridge_cost = bridge_cost(bridge_db, t)
+            bridge_risk = bridge_pfs[bridge_indx][-1]*(bridge_cost+(cost-cost0))
         # add to total delay samples and risk samples
         #total_delay_array.append(total_delay)
         bridge_risk_array.append(bridge_risk)

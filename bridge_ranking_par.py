@@ -16,7 +16,7 @@ import pyNBI.traffic as pytraffic
 import pyDUE.generate_graph as g
 import pyDUE.ue_solver as ue
 from pyNataf.nataf import natafcurve
-from pyNBI.risk import compute_cost
+from pyNBI.risk import social_cost, bridge_cost
 from cvxopt import matrix, mul
 
 from multiprocessing import Pool, Manager, freeze_support
@@ -69,7 +69,7 @@ length_vector = np.zeros(len(graph0.links.keys()))
 for link_key, link_indx in graph0.indlinks.iteritems():
     length_vector[link_indx] = graph0.links[link_key].length
 distance0  = (res0[0].T * matrix(length_vector))[0,0]
-cost0 = compute_cost(bridge_db, delay0, distance0, t)
+cost0 = social_cost(delay0, distance0, t)
 #res_bench = ue.solver(graph0)
 # correlation
 corr_length = 8.73
