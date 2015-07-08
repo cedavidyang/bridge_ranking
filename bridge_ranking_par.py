@@ -32,20 +32,20 @@ def loop_over_bridges(bridge_indx):
 
     # to restore workspace, uncommon the follows
     filename = os.path.join(os.path.abspath('./'), 'Data', 'Python', 'metadata.out')
-    my_shelf = shelve.open(filename)
+    my_shelf = shelve.open(filename, 'r')
     for key in my_shelf:
-        globals()[key]=my_shelf[key]
+        #globals()[key]=my_shelf[key]
+        bridge_db = my_shelf['bridge_db']
+        pmatrix = my_shelf['pmatrix']
+        theta = my_shelf['theta']
+        delaytype = my_shelf['delaytype']
+        graph0 = my_shelf['graph0']
+        all_capacity = my_shelf['all_capacity']
+        length_vector = my_shelf['length_vector']
+        popt = my_shelf['popt']
+        res0 = my_shelf['res0']
     my_shelf.close()
 
-    #bridge_db = metadata['bridge_db']
-    #pmatrix = metadata['pmatrix']
-    #theta = metadata['theta']
-    #delaytype = metadata['delaytype']
-    #graph0 = metadata['graph0']
-    #all_capacity = metadata['all_capacity']
-    #length_vector = metadata['length_vector']
-    #popt = metadata['nataf_popt']
-    #res0 = metadata['res0']
 
     nlink = len(graph0.links)
     cap_drop_array = np.ones(np.asarray(bridge_db, dtype=object).shape[0])*0.1
