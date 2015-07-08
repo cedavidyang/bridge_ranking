@@ -27,50 +27,52 @@ import datetime
 import shelve
 
 # global variables for parallel computing... stupid multiprocessing in Python
-
-# to restore workspace, uncommon the follows
-filename = os.path.join(os.path.abspath('./'), 'Data', 'Python', 'metadata.out')
-my_shelf = shelve.open(filename)
-for key in my_shelf:
-    globals()[key]=my_shelf[key]
-my_shelf.close()
-
-#bridge_db = metadata['bridge_db']
-#pmatrix = metadata['pmatrix']
-#theta = metadata['theta']
-#delaytype = metadata['delaytype']
-#graph0 = metadata['graph0']
-#all_capacity = metadata['all_capacity']
-#length_vector = metadata['length_vector']
-#popt = metadata['nataf_popt']
-#res0 = metadata['res0']
-
-nlink = len(graph0.links)
-cap_drop_array = np.ones(np.asarray(bridge_db, dtype=object).shape[0])*0.1
-# time of interest
-t = 50
-# get current cs distribution
-cs_dist = pytraffic.condition_distribution(t, bridge_db, pmatrix)
-# number of smps
-nsmp = int(1)
-delay0 = res0[1][0,0]
-distance0  = (res0[0].T * matrix(length_vector))[0,0]
-cost0 = social_cost(delay0, distance0, t)
-#res_bench = ue.solver(graph0)
-# correlation
-corr_length = 8.73
-correlation = pybridge.bridge_correlation(bridge_db, corr_length)
-correlation = None
-# nataf
-def nataf(x):
-    return natafcurve(x,*popt)
-## create bookkeeping dict
-#bookkeeping = {}
-
 #def loop_over_bridges(bridge_indx, bookkeeping):
 def loop_over_bridges(bridge_indx):
+
+    # to restore workspace, uncommon the follows
+    filename = os.path.join(os.path.abspath('./'), 'Data', 'Python', 'metadata.out')
+    my_shelf = shelve.open(filename)
+    for key in my_shelf:
+        vars()[key]=my_shelf[key]
+    my_shelf.close()
+
+    #bridge_db = metadata['bridge_db']
+    #pmatrix = metadata['pmatrix']
+    #theta = metadata['theta']
+    #delaytype = metadata['delaytype']
+    #graph0 = metadata['graph0']
+    #all_capacity = metadata['all_capacity']
+    #length_vector = metadata['length_vector']
+    #popt = metadata['nataf_popt']
+    #res0 = metadata['res0']
+
+    nlink = len(graph0.links)
+    cap_drop_array = np.ones(np.asarray(bridge_db, dtype=object).shape[0])*0.1
+    # time of interest
+    t = 50
+    # get current cs distribution
+    cs_dist = pytraffic.condition_distribution(t, bridge_db, pmatrix)
+    # number of smps
+    nsmp = int(1)
+    delay0 = res0[1][0,0]
+    distance0  = (res0[0].T * matrix(length_vector))[0,0]
+    cost0 = social_cost(delay0, distance0, t)
+    #res_bench = ue.solver(graph0)
+    # correlation
+    corr_length = 8.73
+    correlation = pybridge.bridge_correlation(bridge_db, corr_length)
+    correlation = None
+    # nataf
+    #def nataf(x):
+        #return natafcurve(x,*popt)
+    nataf=None
+    ## create bookkeeping dict
+    #bookkeeping = {}
+
     indx, smp = pytraffic.delay_samples(nsmp, graph0, cost0, all_capacity, t, bridge_indx,
             bridge_db, cs_dist, cap_drop_array, theta, delaytype, correlation, nataf, bookkeeping={})
+
     return indx, smp
 
 def tmpfunc(args):
@@ -86,9 +88,9 @@ if __name__ == '__main__':
     try:
         pool = Pool(processes = 30)
         #res = pool.map_async(loop_over_bridges, np.arange(bridge_db.shape[0])).get(0xFFFFFFFF)
-        #res = pool.map_async(loop_over_bridges, np.arange(10)).get(0xFFFFFFFF)
-        results = [pool.apply_async(loop_over_bridges, (b,)) for b in np.arange(30)]
-        res = [r.get() for r in results]
+        res = pool.map_async(loop_over_bridges, np.arange(30)).get(0xFFFFFFFF)
+        #results = [pool.apply_async(loop_over_bridges, (b,)) for b in np.arange(30)]
+        #res = [r.get() for r in results]
         #res = map(loop_over_bridges, np.arange(1))
         #res = pool.map_async(loop_over_bridges,
                 #itertools.izip(itertools.repeat(nsmp), itertools.repeat(graph0), itertools.repeat(cost0),
