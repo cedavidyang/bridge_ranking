@@ -57,7 +57,7 @@ t = 50
 # get current cs distribution
 cs_dist = pytraffic.condition_distribution(t, bridge_db, pmatrix)
 # number of smps
-nsmp = int(100)
+nsmp = int(1)
 # initial capacity without failed bridges
 all_capacity = np.zeros(nlink)
 for link, link_indx in graph0.indlinks.iteritems():
