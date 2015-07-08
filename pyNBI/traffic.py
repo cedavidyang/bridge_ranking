@@ -243,7 +243,7 @@ def delay_samples(nsmp, graph0, cost0, all_capacity, t, bridge_indx, bridge_db, 
         if tuple(bridge_safety_profile) in iter(bookkeeping.keys()):
             total_delay = bookkeeping[tuple(bridge_safety_profile)][0]
             total_distance = bookkeeping[tuple(bridge_safety_profile)][1]
-            cost = social_cost(bridge_db, total_delay, total_distance, t)
+            cost = social_cost(total_delay, total_distance, t)
             bridge_cost = bridge_cost(bridge_db, t)
             bridge_risk = bridge_pfs[bridge_indx][-1]*(bridge_cost+(cost-cost0))
         else:
@@ -260,7 +260,7 @@ def delay_samples(nsmp, graph0, cost0, all_capacity, t, bridge_indx, bridge_db, 
                 length_vector[link_indx] = graph.links[link_key].length
             total_distance = (res[0].T * matrix(length_vector))[0,0]
             bookkeeping[tuple(bridge_safety_profile)] = [total_delay, total_distance]
-            cost = social_cost(bridge_db, total_delay, total_distance, t)
+            cost = social_cost(total_delay, total_distance, t)
             bridge_cost = bridge_cost(bridge_db, t)
             bridge_risk = bridge_pfs[bridge_indx][-1]*(bridge_cost+(cost-cost0))
         # add to total delay samples and risk samples
