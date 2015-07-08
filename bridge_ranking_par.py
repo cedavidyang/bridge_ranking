@@ -64,13 +64,13 @@ correlation = None
 # nataf
 def nataf(x):
     return natafcurve(x,*popt)
-# create bookkeeping dict
-bookkeeping = {}
+## create bookkeeping dict
+#bookkeeping = {}
 
 #def loop_over_bridges(bridge_indx, bookkeeping):
 def loop_over_bridges(bridge_indx):
     indx, smp = pytraffic.delay_samples(nsmp, graph0, cost0, all_capacity, t, bridge_indx,
-            bridge_db, cs_dist, cap_drop_array, theta, delaytype, correlation, nataf, bookkeeping=bookkeeping)
+            bridge_db, cs_dist, cap_drop_array, theta, delaytype, correlation, nataf, bookkeeping={})
     return indx, smp
 
 def tmpfunc(args):
@@ -84,9 +84,9 @@ if __name__ == '__main__':
     start_delta_time = time.time()
     print 'CALC: Parallel version'
     try:
-        pool = Pool(processes = 3)
+        pool = Pool(processes = 30)
         #res = pool.map_async(loop_over_bridges, np.arange(bridge_db.shape[0])).get(0xFFFFFFFF)
-        res = pool.map_async(loop_over_bridges, np.arange(3)).get(0xFFFFFFFF)
+        res = pool.map_async(loop_over_bridges, np.arange(30)).get(0xFFFFFFFF)
         #res = map(loop_over_bridges, np.arange(1))
         #res = pool.map_async(loop_over_bridges,
                 #itertools.izip(itertools.repeat(nsmp), itertools.repeat(graph0), itertools.repeat(cost0),
@@ -107,7 +107,7 @@ if __name__ == '__main__':
 
     start_delta_time = time.time()
     print 'CALC: Series version'
-    res = map(loop_over_bridges, np.arange(3))
+    res = map(loop_over_bridges, np.arange(30))
     delta_time = time.time() - start_delta_time
     print 'DONE',str(datetime.timedelta(seconds=delta_time))
 
