@@ -87,7 +87,7 @@ if __name__ == '__main__':
         pool = Pool(processes = 60)
         #res = pool.map_async(loop_over_bridges, np.arange(bridge_db.shape[0])).get(0xFFFFFFFF)
         #res = pool.map_async(loop_over_bridges, np.arange(60)).get(0xFFFFFFFF)
-        res = pool.imap(loop_over_bridges, np.arange(60)).get(0xFFFFFFFF)
+        res = pool.imap(loop_over_bridges, np.arange(60))
         #res = map(loop_over_bridges, np.arange(1))
         #res = pool.map_async(loop_over_bridges,
                 #itertools.izip(itertools.repeat(nsmp), itertools.repeat(graph0), itertools.repeat(cost0),
