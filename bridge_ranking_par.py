@@ -19,7 +19,8 @@ from pyNataf.nataf import natafcurve
 from pyNBI.risk import social_cost, bridge_cost
 from cvxopt import matrix, mul
 
-from multiprocessing import Pool, Manager, freeze_support
+from multiprocessing import Pool, Manager, freeze_support, Queue, Process
+import Queue as queue
 import itertools
 
 import time
@@ -75,8 +76,9 @@ def loop_over_bridges(bridge_indx):
 
     return indx, smp
 
-def tmpfunc(args):
-    return loop_over_bridges(*args)
+def tmpfunc(bridge_indx,q):
+    indx,smp =  loop_over_bridges(bridge_indx)
+    q.put((indx,smp))
 
 if __name__ == '__main__':
     freeze_support()
@@ -86,21 +88,36 @@ if __name__ == '__main__':
     start_delta_time = time.time()
     print 'CALC: Parallel version'
     try:
-        pool = Pool(processes = 10)
-        #res = pool.map_async(loop_over_bridges, np.arange(bridge_db.shape[0])).get(0xFFFFFFFF)
-        res = pool.map_async(loop_over_bridges, np.arange(30)).get(0xFFFFFFFF)
-        #results = [pool.apply_async(loop_over_bridges, (b,)) for b in np.arange(30)]
-        #res = [r.get() for r in results]
-        #res = map(loop_over_bridges, np.arange(1))
-        #res = pool.map_async(loop_over_bridges,
-                #itertools.izip(itertools.repeat(nsmp), itertools.repeat(graph0), itertools.repeat(cost0),
-                    #itertools.repeat(all_capacity), np.arange(bridge_db.shape[0]), itertools.repeat(bridge_db),
-                    #itertools.repeat(cs_dist), itertools.repeat(cap_drop_array), itertools.repeat(theta),
-                    #itertools.repeat(delaytype), itertools.repeat(correlation), itertools.repeat(nataf),
-                    #itertools.repeat(bookkeeping))).get(0xFFFF)
-        #res = pool.map_async(tmpfunc,itertools.izip(np.arange(bridge_db.shape[0]), itertools.repeat(bookkeeping))).get(0xFFFF)
-        pool.close()
-        pool.join()
+        #pool = Pool(processes = 3)
+        ##res = pool.map_async(loop_over_bridges, np.arange(bridge_db.shape[0])).get(0xFFFFFFFF)
+        #res = pool.map_async(loop_over_bridges, np.arange(3)).get(0xFFFFFFFF)
+        ##results = [pool.apply_async(loop_over_bridges, (b,)) for b in np.arange(30)]
+
+        ##res = [r.get() for r in results]
+        ##res = map(loop_over_bridges, np.arange(1))
+        ##res = pool.map_async(loop_over_bridges,
+                ##itertools.izip(itertools.repeat(nsmp), itertools.repeat(graph0), itertools.repeat(cost0),
+                    ##itertools.repeat(all_capacity), np.arange(bridge_db.shape[0]), itertools.repeat(bridge_db),
+                    ##itertools.repeat(cs_dist), itertools.repeat(cap_drop_array), itertools.repeat(theta),
+                    ##itertools.repeat(delaytype), itertools.repeat(correlation), itertools.repeat(nataf),
+                    ##itertools.repeat(bookkeeping))).get(0xFFFF)
+        ##res = pool.map_async(tmpfunc,itertools.izip(np.arange(bridge_db.shape[0]), itertools.repeat(bookkeeping))).get(0xFFFF)
+        #pool.close()
+        #pool.join()
+        q = Queue()
+        for bridge_indx in np.arange(30):
+            print "sub"
+            p = Process(target=tmpfunc, args=(bridge_indx,q))
+            p.start()
+        for bridge_indx in np.arange(30):
+            p.join()
+        res = []
+        while True:
+            try:
+                res.append(q.get(timeout=1))
+            except queue.Empty:
+                break
+
     except KeyboardInterrupt:
         print "Caught KeyboardInterrupt, terminating workers"
         pool.terminate()
@@ -117,6 +134,12 @@ if __name__ == '__main__':
 
     bridge_indx = np.asarray(res, dtype=object)[:,0].astype('int')
     bridge_risk_data = np.vstack(np.asarray(res, dtype=object)[:,1]).T
+    filename = os.path.join(os.path.abspath('./'), 'Data', 'Python', 'metadata.out')
+    my_shelf = shelve.open(filename, 'r')
+    for key in my_shelf:
+        #globals()[key]=my_shelf[key]
+        bridge_db = my_shelf['bridge_db']
+    my_shelf.close()
 
     # postprocessing
     import matplotlib.pyplot as plt
