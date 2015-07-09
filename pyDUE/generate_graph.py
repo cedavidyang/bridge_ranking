@@ -158,7 +158,7 @@ def braess_paradox():
     endnodes = [2,3,4,4]
     lengths = [2e3, 10e3, 10e3, 2e3]
     freespeed = 30e3/3600.
-    caps = [10., 100., 100., 10.]
+    caps = [100., 1000., 1000., 100.]
     theta = matrix([0.0, 0.0, 0.0, 0.15])
     degree = len(theta)
     for startnode, endnode, length, cap in zip(startnodes, endnodes, lengths, caps):
@@ -168,7 +168,7 @@ def braess_paradox():
         links.append((startnode, endnode, 1, ff_d, (ff_d, slope, coef), cap, length,freespeed))
     graph.add_links_from_list(links, 'Polynomial')
     # OD pairs
-    graph.add_od(1, 4, 100.0)
+    graph.add_od(1, 4, 1000.0)
 
     return graph
 
