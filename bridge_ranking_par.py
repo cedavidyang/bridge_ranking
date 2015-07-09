@@ -28,49 +28,49 @@ import datetime
 import shelve
 
 # global variables for parallel computing... stupid multiprocessing in Python
+
+# to restore workspace, uncommon the follows
+filename = os.path.join(os.path.abspath('./'), 'Data', 'Python', 'metadata.out')
+my_shelf = shelve.open(filename, 'r')
+for key in my_shelf:
+    #globals()[key]=my_shelf[key]
+    bridge_db = my_shelf['bridge_db']
+    pmatrix = my_shelf['pmatrix']
+    theta = my_shelf['theta']
+    delaytype = my_shelf['delaytype']
+    graph0 = my_shelf['graph0']
+    all_capacity = my_shelf['all_capacity']
+    length_vector = my_shelf['length_vector']
+    popt = my_shelf['popt']
+    res0 = my_shelf['res0']
+my_shelf.close()
+
+
+nlink = len(graph0.links)
+cap_drop_array = np.ones(np.asarray(bridge_db, dtype=object).shape[0])*0.1
+# time of interest
+t = 50
+# get current cs distribution
+cs_dist = pytraffic.condition_distribution(t, bridge_db, pmatrix)
+# number of smps
+nsmp = int(100)
+delay0 = res0[1][0,0]
+distance0  = (res0[0].T * matrix(length_vector))[0,0]
+cost0 = social_cost(delay0, distance0, t)
+#res_bench = ue.solver(graph0)
+# correlation
+corr_length = 8.73
+correlation = pybridge.bridge_correlation(bridge_db, corr_length)
+correlation = None
+# nataf
+#def nataf(x):
+    #return natafcurve(x,*popt)
+nataf=None
+## create bookkeeping dict
+#bookkeeping = {}
+
 #def loop_over_bridges(bridge_indx, bookkeeping):
 def loop_over_bridges(bridge_indx):
-
-    # to restore workspace, uncommon the follows
-    filename = os.path.join(os.path.abspath('./'), 'Data', 'Python', 'metadata.out')
-    my_shelf = shelve.open(filename, 'r')
-    for key in my_shelf:
-        #globals()[key]=my_shelf[key]
-        bridge_db = my_shelf['bridge_db']
-        pmatrix = my_shelf['pmatrix']
-        theta = my_shelf['theta']
-        delaytype = my_shelf['delaytype']
-        graph0 = my_shelf['graph0']
-        all_capacity = my_shelf['all_capacity']
-        length_vector = my_shelf['length_vector']
-        popt = my_shelf['popt']
-        res0 = my_shelf['res0']
-    my_shelf.close()
-
-
-    nlink = len(graph0.links)
-    cap_drop_array = np.ones(np.asarray(bridge_db, dtype=object).shape[0])*0.1
-    # time of interest
-    t = 50
-    # get current cs distribution
-    cs_dist = pytraffic.condition_distribution(t, bridge_db, pmatrix)
-    # number of smps
-    nsmp = int(100)
-    delay0 = res0[1][0,0]
-    distance0  = (res0[0].T * matrix(length_vector))[0,0]
-    cost0 = social_cost(delay0, distance0, t)
-    #res_bench = ue.solver(graph0)
-    # correlation
-    corr_length = 8.73
-    correlation = pybridge.bridge_correlation(bridge_db, corr_length)
-    correlation = None
-    # nataf
-    #def nataf(x):
-        #return natafcurve(x,*popt)
-    nataf=None
-    ## create bookkeeping dict
-    #bookkeeping = {}
-
     indx, smp = pytraffic.delay_samples(nsmp, graph0, cost0, all_capacity, t, bridge_indx,
             bridge_db, cs_dist, cap_drop_array, theta, delaytype, correlation, nataf, bookkeeping={})
 
@@ -135,12 +135,6 @@ if __name__ == '__main__':
 
     bridge_indx = np.asarray(res, dtype=object)[:,0].astype('int')
     bridge_risk_data = np.vstack(np.asarray(res, dtype=object)[:,1]).T
-    filename = os.path.join(os.path.abspath('./'), 'Data', 'Python', 'metadata.out')
-    my_shelf = shelve.open(filename, 'r')
-    for key in my_shelf:
-        #globals()[key]=my_shelf[key]
-        bridge_db = my_shelf['bridge_db']
-    my_shelf.close()
 
     # postprocessing
     import matplotlib.pyplot as plt
