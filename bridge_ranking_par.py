@@ -88,9 +88,9 @@ if __name__ == '__main__':
     start_delta_time = time.time()
     print 'CALC: Parallel version'
     try:
-        pool = Pool(processes = 60)
+        #pool = Pool(processes = 60)
         #res = pool.map_async(loop_over_bridges, np.arange(bridge_db.shape[0])).get(0xFFFFFFFF)
-        res = pool.map_async(loop_over_bridges, np.arange(60)).get(0xFFFFFFFF)
+        #res = pool.map_async(loop_over_bridges, np.arange(60)).get(0xFFFFFFFF)
         #results = [pool.apply_async(loop_over_bridges, (b,)) for b in np.arange(30)]
 
         #res = [r.get() for r in results]
@@ -102,21 +102,22 @@ if __name__ == '__main__':
                     #itertools.repeat(delaytype), itertools.repeat(correlation), itertools.repeat(nataf),
                     #itertools.repeat(bookkeeping))).get(0xFFFF)
         #res = pool.map_async(tmpfunc,itertools.izip(np.arange(bridge_db.shape[0]), itertools.repeat(bookkeeping))).get(0xFFFF)
-        pool.close()
-        pool.join()
-        #q = Queue()
-        #for bridge_indx in np.arange(60):
-            #print "sub"
-            #p = Process(target=tmpfunc, args=(bridge_indx,q))
-            #p.start()
-        #for bridge_indx in np.arange(60):
-            #p.join()
-        #res = []
-        #while True:
-            #try:
-                #res.append(q.get(timeout=1))
-            #except queue.Empty:
-                #break
+        #pool.close()
+        #pool.join()
+
+        q = Queue()
+        for bridge_indx in np.arange(60):
+            print "sub"
+            p = Process(target=tmpfunc, args=(bridge_indx,q))
+            p.start()
+        for bridge_indx in np.arange(60):
+            p.join()
+        res = []
+        while True:
+            try:
+                res.append(q.get(timeout=1))
+            except queue.Empty:
+                break
 
     except KeyboardInterrupt:
         print "Caught KeyboardInterrupt, terminating workers"
