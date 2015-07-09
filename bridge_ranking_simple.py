@@ -17,13 +17,13 @@ import itertools
 import time
 import datetime
 
-theta = matrix([1.0, 0.0, 0.0, 0.0])
+theta = matrix([0.0, 0.0, 0.0, 0.15])
 delaytype = 'Polynomial'
 bridge_db = np.array(
-    [['      1', 1, 1, 1., 1., 5, 6, 7, 10.0e-3, [(1, 2, 1)]],
-    ['      2', 1, 1, 1., 1., 5, 6, 6, 1.0e-3, [(1, 3, 1)]],
-    ['      3', 1, 1, 1., 1., 5, 6, 6, 1.0e-3, [(2, 4, 1)]],
-    ['      4', 1, 1, 1., 1., 5, 6, 7, 10.0e-3, [(3, 4, 1)]]], dtype=object)
+    [['      1', 1, 1, 50., 10., 5, 6, 7, 10.0, [(1, 2, 1)]],
+    ['      2', 1, 1, 50., 10., 5, 6, 6, 1.0, [(1, 3, 1)]],
+    ['      3', 1, 1, 50., 10., 5, 6, 6, 1.0, [(2, 4, 1)]],
+    ['      4', 1, 1, 50., 10., 5, 6, 7, 10.0, [(3, 4, 1)]]], dtype=object)
 pmatrix = np.load('pmatrix.npy')
 graph0 = g.braess_paradox()
 nlink = len(graph0.links)
