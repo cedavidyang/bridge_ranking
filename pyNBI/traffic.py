@@ -244,7 +244,8 @@ def delay_samples(nsmp, graph0, cost0, all_capacity, t, bridge_indx, bridge_db, 
             total_delay = bookkeeping[tuple(bridge_safety_profile)][0]
             total_distance = bookkeeping[tuple(bridge_safety_profile)][1]
             cost = social_cost(total_delay, total_distance, t)
-            bridgecost = bridge_cost(bridge_db, t)
+            fail_bridges = bridge_db[np.logical_not(bridge_safety_profile.astype(bool))]
+            bridgecost = bridge_cost(fail_bridges, t)
             bridge_risk = bridge_pfs[bridge_indx][-1]*(bridgecost+(cost-cost0))
         else:
             graph = copy.deepcopy(graph0)
@@ -261,7 +262,7 @@ def delay_samples(nsmp, graph0, cost0, all_capacity, t, bridge_indx, bridge_db, 
             total_distance = (res[0].T * matrix(length_vector))[0,0]
             bookkeeping[tuple(bridge_safety_profile)] = [total_delay, total_distance]
             cost = social_cost(total_delay, total_distance, t)
-            bridgecost = bridge_cost(bridge_db, t)
+            bridgecost = bridge_cost(fail_bridges, t)
             bridge_risk = bridge_pfs[bridge_indx][-1]*(bridgecost+(cost-cost0))
         # add to total delay samples and risk samples
         #total_delay_array.append(total_delay)
