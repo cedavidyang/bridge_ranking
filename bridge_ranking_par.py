@@ -53,7 +53,7 @@ t = 50
 # get current cs distribution
 cs_dist = pytraffic.condition_distribution(t, bridge_db, pmatrix)
 # number of smps
-nsmp = int(1)
+nsmp = int(10)
 delay0 = res0[1][0,0]
 distance0  = (res0[0].T * matrix(length_vector))[0,0]
 cost0 = social_cost(delay0, distance0, t)
