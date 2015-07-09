@@ -153,14 +153,23 @@ def transition_matrix(years, component='deck'):
         pmatrix = transition_CS(yr, component=component)
         pmatrix_array.append(pmatrix)
     pmatrix_array = np.array(pmatrix_array)
+    # use median value
     pmatrix_median = np.zeros((8,8))
     for i in xrange(8):
         for j in range(i, 8):
             pmatrix_median[i,j] = np.median(pmatrix_array[pmatrix_array[:,i,j]!=-1,i,j])
     for i in xrange(8):
         pmatrix_median[i,:] = pmatrix_median[i,:]/np.sum(pmatrix_median[i,:])
-
     return pmatrix_median
+    ## use mean value
+    #pmatrix_mean = np.zeros((8,8))
+    #for i in xrange(8):
+        #for j in range(i, 8):
+            #pmatrix_mean[i,j] = np.mean(pmatrix_array[pmatrix_array[:,i,j]!=-1,i,j])
+    #for i in xrange(8):
+        #pmatrix_mean[i,:] = pmatrix_mean[i,:]/np.sum(pmatrix_mean[i,:])
+    #return pmatrix_mean
+
 
 def bridge_correlation(bridge_db, corr_length):
     def int_to_degree(int_value):
