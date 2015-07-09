@@ -53,7 +53,7 @@ t = 50
 # get current cs distribution
 cs_dist = pytraffic.condition_distribution(t, bridge_db, pmatrix)
 # number of smps
-nsmp = int(100)
+nsmp = int(1000)
 delay0 = res0[1][0,0]
 distance0  = (res0[0].T * matrix(length_vector))[0,0]
 cost0 = social_cost(delay0, distance0, t)
@@ -61,7 +61,7 @@ cost0 = social_cost(delay0, distance0, t)
 # correlation
 corr_length = 8.73
 correlation = pybridge.bridge_correlation(bridge_db, corr_length)
-correlation = None
+#correlation = None
 # nataf
 #def nataf(x):
     #return natafcurve(x,*popt)
@@ -106,11 +106,11 @@ if __name__ == '__main__':
         #pool.join()
 
         q = Queue()
-        for bridge_indx in np.arange(1):
+        for bridge_indx in np.arange(10):
             print "sub"
             p = Process(target=tmpfunc, args=(bridge_indx,q))
             p.start()
-        for bridge_indx in np.arange(1):
+        for bridge_indx in np.arange(10):
             p.join()
         res = []
         while True:
