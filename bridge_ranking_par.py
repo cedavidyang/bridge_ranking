@@ -55,7 +55,7 @@ def loop_over_bridges(bridge_indx):
     # get current cs distribution
     cs_dist = pytraffic.condition_distribution(t, bridge_db, pmatrix)
     # number of smps
-    nsmp = int(1)
+    nsmp = int(100)
     delay0 = res0[1][0,0]
     distance0  = (res0[0].T * matrix(length_vector))[0,0]
     cost0 = social_cost(delay0, distance0, t)
@@ -126,11 +126,11 @@ if __name__ == '__main__':
     delta_time = time.time() - start_delta_time
     print 'DONE',str(datetime.timedelta(seconds=delta_time))
 
-    start_delta_time = time.time()
-    print 'CALC: Series version'
-    res = map(loop_over_bridges, np.arange(60))
-    delta_time = time.time() - start_delta_time
-    print 'DONE',str(datetime.timedelta(seconds=delta_time))
+    #start_delta_time = time.time()
+    #print 'CALC: Series version'
+    #res = map(loop_over_bridges, np.arange(60))
+    #delta_time = time.time() - start_delta_time
+    #print 'DONE',str(datetime.timedelta(seconds=delta_time))
 
     bridge_indx = np.asarray(res, dtype=object)[:,0].astype('int')
     bridge_risk_data = np.vstack(np.asarray(res, dtype=object)[:,1]).T
