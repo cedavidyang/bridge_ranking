@@ -63,8 +63,8 @@ nataf=None
 
 def loop_over_bridges(bridge_indx):
     indx, smp = pytraffic.delay_samples(nsmp, graph0, cost0, all_capacity, t, bridge_indx,
-            bridge_db, cs_dist, cap_drop_array, theta, delaytype, 
-            correlation=correlation, nataf=nataf,corrcoef=0.5, bookkeeping=bookkeeping)
+            bridge_db, cs_dist, cap_drop_array, theta, delaytype,
+            correlation=correlation, nataf=nataf,corrcoef=0.9, bookkeeping=bookkeeping)
     return indx, smp
 
 if __name__ == '__main__':
