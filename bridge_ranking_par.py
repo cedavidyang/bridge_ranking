@@ -16,6 +16,7 @@ import pyNBI.traffic as pytraffic
 import pyDUE.generate_graph as g
 import pyDUE.ue_solver as ue
 from pyNataf.nataf import natafcurve
+from pyNataf.robust import semidefinitive
 from pyNBI.risk import social_cost, bridge_cost
 from cvxopt import matrix, mul
 
@@ -95,9 +96,9 @@ if __name__ == '__main__':
     start_delta_time = time.time()
     print 'CALC: Parallel version'
     try:
-        pool = Pool(processes = 10)
+        pool = Pool(processes = 1)
         #res = pool.map_async(loop_over_bridges, np.arange(bridge_db.shape[0])).get(0xFFFFFFFF)
-        res = pool.map_async(loop_over_bridges, np.arange(10)).get(0xFFFFFFFF)
+        res = pool.map_async(loop_over_bridges, np.arange(1)).get(0xFFFFFFFF)
         #results = [pool.apply_async(loop_over_bridges, (b,)) for b in np.arange(30)]
 
         #res = [r.get() for r in results]
