@@ -30,7 +30,7 @@ for key in my_shelf:
 my_shelf.close()
 
 # time of interest
-t = 50
+t = 10
 # get current cs distribution and socialcost0
 cs_dist = pytraffic.condition_distribution(t, bridge_db, pmatrix)
 cost0 = social_cost(delay0, distance0, t)
