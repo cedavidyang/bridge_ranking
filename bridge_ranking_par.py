@@ -68,11 +68,18 @@ correlation = pybridge.bridge_correlation(bridge_db, corr_length)
 nataf=None
 ## create bookkeeping dict
 #bookkeeping = {}
+# generate random field
+if nataf is None:
+    norm_cov = correlation
+else:
+    norm_cov = nataf(correlation)
+norm_cov = semidefinitive(norm_cov, tol=1e-14, deftol=1e-12)
 
 #def loop_over_bridges(bridge_indx, bookkeeping):
 def loop_over_bridges(bridge_indx):
     indx, smp = pytraffic.delay_samples(nsmp, graph0, cost0, all_capacity, t, bridge_indx,
-            bridge_db, cs_dist, cap_drop_array, theta, delaytype, correlation, nataf, bookkeeping={})
+            bridge_db, cs_dist, cap_drop_array, theta, delaytype,
+            correlation=norm_cov, nataf=nataf, corrcoef=0., bookkeeping={})
 
     return indx, smp
 
