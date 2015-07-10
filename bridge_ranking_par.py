@@ -7,18 +7,10 @@ __author__ = 'cedavidyang'
 
 import os
 import sys
-import psycopg2
-import numpy as np
-import scipy.stats as stats
-import pyNBI.bridge as pybridge
-import pyNBI.traffic as pytraffic
 
-import pyDUE.generate_graph as g
-import pyDUE.ue_solver as ue
-from pyNataf.nataf import natafcurve
-from pyNataf.robust import semidefinitive
-from pyNBI.risk import social_cost, bridge_cost
-from cvxopt import matrix, mul
+import numpy as np
+import pyNBI.traffic as pytraffic
+from pyNBI.risk import social_cost
 
 from multiprocessing import Pool, Manager, freeze_support, Queue, Process
 import Queue as queue
@@ -30,54 +22,20 @@ import shelve
 
 # global variables for parallel computing... stupid multiprocessing in Python
 
-# to restore workspace, uncommon the follows
+# to restore workspace import global variables
 filename = os.path.join(os.path.abspath('./'), 'Data', 'Python', 'metadata.out')
 my_shelf = shelve.open(filename, 'r')
 for key in my_shelf:
-    #globals()[key]=my_shelf[key]
-    bridge_db = my_shelf['bridge_db']
-    pmatrix = my_shelf['pmatrix']
-    theta = my_shelf['theta']
-    delaytype = my_shelf['delaytype']
-    graph0 = my_shelf['graph0']
-    all_capacity = my_shelf['all_capacity']
-    length_vector = my_shelf['length_vector']
-    popt = my_shelf['popt']
-    res0 = my_shelf['res0']
+    globals()[key]=my_shelf[key]
 my_shelf.close()
 
-
-nlink = len(graph0.links)
-cap_drop_array = np.ones(np.asarray(bridge_db, dtype=object).shape[0])*0.1
 # time of interest
 t = 50
-# get current cs distribution
+# get current cs distribution and socialcost0
 cs_dist = pytraffic.condition_distribution(t, bridge_db, pmatrix)
+cost0 = social_cost(delay0, distance0, t)
 # number of smps
 nsmp = int(10)
-delay0 = res0[1][0,0]
-distance0  = (res0[0].T * matrix(length_vector))[0,0]
-cost0 = social_cost(delay0, distance0, t)
-#res_bench = ue.solver(graph0)
-# correlation
-corr_length = 8.73
-correlation = pybridge.bridge_correlation(bridge_db, corr_length)
-#correlation = None
-# nataf
-#def nataf(x):
-    #return natafcurve(x,*popt)
-nataf=None
-## create bookkeeping dict
-#bookkeeping = {}
-# generate random field
-if nataf is None:
-    norm_cov = correlation
-else:
-    norm_cov = nataf(correlation)
-try:
-    tmp = np.linalg.cholesky(norm_cov)
-except:
-    norm_cov = semidefinitive(norm_cov, tol=1e-14, deftol=1e-12)
 
 #def loop_over_bridges(bridge_indx, bookkeeping):
 def loop_over_bridges(bridge_indx):
@@ -113,8 +71,8 @@ if __name__ == '__main__':
                     #itertools.repeat(delaytype), itertools.repeat(correlation), itertools.repeat(nataf),
                     #itertools.repeat(bookkeeping))).get(0xFFFF)
         #res = pool.map_async(tmpfunc,itertools.izip(np.arange(bridge_db.shape[0]), itertools.repeat(bookkeeping))).get(0xFFFF)
-        #pool.close()
-        #pool.join()
+        pool.close()
+        pool.join()
 
         #q = Queue()
         #for bridge_indx in np.arange(10):
@@ -147,23 +105,23 @@ if __name__ == '__main__':
     bridge_indx = np.asarray(res, dtype=object)[:,0].astype('int')
     bridge_risk_data = np.vstack(np.asarray(res, dtype=object)[:,1]).T
 
-    # postprocessing
-    import matplotlib.pyplot as plt
-    plt.ion()
-    plt.rc('font', family='serif', size=12)
-    #plt.rc('text', usetex=True)
+    ## postprocessing
+    #import matplotlib.pyplot as plt
+    #plt.ion()
+    #plt.rc('font', family='serif', size=12)
+    ##plt.rc('text', usetex=True)
 
-    fig, ax = plt.subplots(1,1)
-    ax.boxplot(bridge_risk_data, showmeans=True)
-    plt.xlabel('Bridge index')
-    plt.ylabel('Risk of bridge failure (time unit)')
-    xtick_label = bridge_db[bridge_indx, 0]
-    ax.set_xticklabels(xtick_label, rotation='vertical')
-    left = fig.subplotpars.left
-    right = fig.subplotpars.right
-    top = fig.subplotpars.top
-    bottom = fig.subplotpars.bottom
-    plt.subplots_adjust(left=left, right=right, top=top+0.07, bottom=bottom+0.07)
+    #fig, ax = plt.subplots(1,1)
+    #ax.boxplot(bridge_risk_data, showmeans=True)
+    #plt.xlabel('Bridge index')
+    #plt.ylabel('Risk of bridge failure (time unit)')
+    #xtick_label = bridge_db[bridge_indx, 0]
+    #ax.set_xticklabels(xtick_label, rotation='vertical')
+    #left = fig.subplotpars.left
+    #right = fig.subplotpars.right
+    #top = fig.subplotpars.top
+    #bottom = fig.subplotpars.bottom
+    #plt.subplots_adjust(left=left, right=right, top=top+0.07, bottom=bottom+0.07)
 
     # save data
     import shelve
@@ -171,7 +129,7 @@ if __name__ == '__main__':
         'ranking_LA '+str(datetime.datetime.now()).replace(':', '-'))
     if not os.path.exists(dir_name):
         os.makedirs(dir_name)
-    plt.savefig(os.path.join(dir_name,'bridge_ranking_LA.eps'))
+    #plt.savefig(os.path.join(dir_name,'bridge_ranking_LA.eps'))
     filename=os.path.join(dir_name,'data_shelve.out')
     my_shelf = shelve.open(filename,'n') # 'n' for new
     for key in dir():
@@ -191,5 +149,5 @@ if __name__ == '__main__':
         #globals()[key]=my_shelf[key]
     #my_shelf.close()
 
-    plt.ion()
-    plt.show()
+    #plt.ion()
+    #plt.show()
