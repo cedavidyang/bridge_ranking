@@ -75,8 +75,8 @@ if nataf is None:
 else:
     norm_cov = nataf(correlation)
 try:
-    np.linalg.cholesky(norm_cov)
-except LinAlgError:
+    tmp = np.linalg.cholesky(norm_cov)
+except:
     norm_cov = semidefinitive(norm_cov, tol=1e-14, deftol=1e-12)
 
 #def loop_over_bridges(bridge_indx, bookkeeping):
