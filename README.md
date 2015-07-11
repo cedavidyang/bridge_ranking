@@ -23,6 +23,10 @@ Bridge data can be downloaded from http://www.fhwa.dot.gov/bridge/nbi/ascii.cfm
 1. Installation of QGIS and PostGIS can be found on https://github.com/megacell/user-equilibrium-synthetic
 
 2. Instructions for importing shapefiles to PostGIS database and export to CSV data can be found on https://github.com/megacell/user-equilibrium-synthetic
+```bash
+shp2pgsql -s <SRID> <shapefile> <tablename> <db_name> > filename.sql
+psql -d <dbname> –U <dbowner> –h <hostname> –p <port> -f filename.sql
+```
 
 
 Setup 2: create nodes, links, bridge and voronoi files (db tables and csv files)
@@ -41,7 +45,7 @@ Setup 2: create nodes, links, bridge and voronoi files (db tables and csv files)
 
 5. Import nodes and motorways to PostGIS
 
-6. Run motorway2link.sql to create a table of *links*
+6. Run ```psql -d <dbname> motorway2link.sql``` to create a table of *links*
 
 7. Create a layer of voronoi polygons of nodes (QGIS->Geometry tools->Voronoi
    polygons), import the shapefile to PostGIS. Use buffer to overlap all taz
@@ -69,7 +73,7 @@ NOTE: SRID should be the same for all the geometric manipulations
 
 Setup 3: update python files with directory paths
 -----
-Use ```grep -nr -exclude-dir ./.git 'xxx' ./``` to make sure all directories
+Use ```grep -nr --exclude-dir ./.git 'xxx' ./``` to make sure all directories
 are corrected
 
 
