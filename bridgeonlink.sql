@@ -1,4 +1,5 @@
-﻿CREATE TABLE network.LA_bridges2 as(
+﻿BEGIN;
+CREATE TABLE network.LA_bridges2 as(
 SELECT bridges.*,
 	(
 	SELECT concat_ws(', ', motorway.gid::int, (motorway.gid+85)::int)
@@ -8,3 +9,4 @@ SELECT bridges.*,
 FROM network.LA_bridges bridges);
 drop table network.LA_bridges;
 alter table network.LA_bridges2 rename to LA_bridges;
+COMMIT;
