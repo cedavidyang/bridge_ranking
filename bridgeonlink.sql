@@ -2,7 +2,7 @@
 CREATE TABLE network.LA_bridges2 as(
 SELECT bridges.*,
 	(
-	SELECT concat_ws(', ', motorway.gid::int, (motorway.gid+85)::int)
+	SELECT concat_ws(', ', motorway.gid::int, (motorway.gid+(select count(*)/2 from network.la_links))::int)
 	FROM network.LA_motorway motorway
 	ORDER BY ST_Distance(motorway.geom,bridges.geom)
 	LIMIT 1) as onlinks
