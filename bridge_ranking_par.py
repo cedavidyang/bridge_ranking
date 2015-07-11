@@ -35,7 +35,7 @@ t = 10
 cs_dist = pytraffic.condition_distribution(t, bridge_db, pmatrix)
 cost0 = social_cost(delay0, distance0, t)
 # number of smps
-nsmp = int(10)
+nsmp = int(100)
 
 #def loop_over_bridges(bridge_indx, bookkeeping):
 def loop_over_bridges(bridge_indx):
@@ -57,9 +57,9 @@ if __name__ == '__main__':
     start_delta_time = time.time()
     print 'CALC: Parallel version'
     try:
-        pool = Pool(processes = 8)
+        pool = Pool(processes = 10)
         #res = pool.map_async(loop_over_bridges, np.arange(bridge_db.shape[0])).get(0xFFFFFFFF)
-        res = pool.map_async(loop_over_bridges, np.zeros(8, dtype=int)).get(0xFFFFFFFF)
+        res = pool.map_async(loop_over_bridges, np.zeros(10, dtype=int)).get(0xFFFFFFFF)
         #results = [pool.apply_async(loop_over_bridges, (b,)) for b in np.arange(30)]
 
         #res = [r.get() for r in results]
