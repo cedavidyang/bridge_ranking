@@ -82,6 +82,8 @@ Setup 4: run python scripts
 
 Run **pyDUE/postgres_queries.py** to create ```./Data/TAZ/Description_TAZ.csv```
 
+Run **bridge_ranking_preprocessing** to create ```./Data/Python/metadata.out```
+
 Run **ue_LA_county.py** for traffic assignment without bridges
 
 Run **bridge_ranking_par.py** for Monte Carlo simulation. Make sure that the
