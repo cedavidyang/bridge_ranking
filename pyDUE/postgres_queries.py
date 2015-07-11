@@ -54,7 +54,7 @@ def derive_taz_attributes(cur, list_taz, box=None):
             #pos_centroid_UTM = map(float, pos_centroid_UTM)
             #lat_centroid, lng_centroid = utm.to_latlon(pos_centroid_UTM[0], pos_centroid_UTM[1] , 11, 'N') #The shapefiles are in the UTM "11N" coordinates
     
-        if is_in_LA_Box(lat_centroid, lng_centroid) or box is None:
+        if box is None or is_in_LA_Box(lat_centroid, lng_centroid, box):
             #s='select count(*) from taz.ca_taz_2009 TAZ, network.test_LA_nodes nodes where TAZ.gid = '+str(taz_id)+' AND ST_Contains(TAZ.geom, nodes.geom);'
             s='select count(*) from taz.ca_taz_2009 TAZ, network.LA_nodes nodes where TAZ.gid = '+str(taz_id)+' AND ST_Contains(TAZ.geom, nodes.geom);'
             cur.execute(s)

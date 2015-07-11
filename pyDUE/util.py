@@ -145,10 +145,10 @@ def distance_on_unit_sphere(lat1, long1, lat2, long2):
 def closest_node(lat, lng, nodes):
     Nodes_candidates=[]
     Distances=[]
-    latmax=lat+0.2
-    latmin=lat-0.2
-    lngmax=lng+0.2
-    lngmin=lng-0.2
+    latmax=lat+0.7
+    latmin=lat-0.7
+    lngmax=lng+0.7
+    lngmin=lng-0.7
     for i in range(len(nodes)):
         node = nodes[i]
         if is_in_box(latmin, latmax, lngmin, lngmax, node):
