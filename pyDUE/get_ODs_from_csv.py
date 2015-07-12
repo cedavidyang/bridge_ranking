@@ -32,9 +32,8 @@ def Create_dict_TAZ_2_node(List_TAZ, List_TAZ_ids, nodes=None, cur_gis=None):
                 " where t.gid = {};").format(i)
             cur_gis.execute(s)
             try:
-                res = cur_gis.fetchall()[0][0]
-                dict[i] = int(res)
-            except IndexError:
+                dict[i] = int(cur_gis.fetchall()[0][0])
+            except TypeError:
                 dict[i] = closest_node(List_TAZ[j][1], List_TAZ[j][2], nodes)
         elif nodes is not None:
             dict[i] = closest_node(List_TAZ[j][1], List_TAZ[j][2], nodes)
