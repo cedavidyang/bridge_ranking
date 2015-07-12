@@ -37,15 +37,15 @@ Setup 2: create nodes, links, bridge and voronoi files (db tables and csv files)
 2. Clip highway with either taz shapefile or clip rectangular
    (QGIS->Vector->Geoprocessing->Clip)
 
-3. Add point layer *nodes* and line layer *motorways*
-
+3. Add point layer *nodes* and line layer *motorways* 
 4. Create nodes and motorways (single line). Open Snap for better selection (QGIS->Snapping
    Options)
   1. nodes should have x and y attributes as longitude and latitude respectively
 
 5. Import nodes and motorways to PostGIS
 
-6. Run ```psql -d <dbname> motorway2link.sql``` to create a table of *links*
+6. Run ```psql -d <dbname> motorway2link.sql``` to create a table of *links*,
+   and export the table to csv with ```COPY network.la_links TO './Data/Network/CSV/LA_county/links.csv' DELIMITER ',' CSV HEADER;```
 
 7. Create a layer of voronoi polygons of nodes (QGIS->Geometry tools->Voronoi
    polygons), import the shapefile to PostGIS. Use buffer to overlap all taz
