@@ -45,7 +45,10 @@ Setup 2: create nodes, links, bridge and voronoi files (db tables and csv files)
 5. Import nodes and motorways to PostGIS
 
 6. Run ```psql -d <dbname> motorway2link.sql``` to create a table of *links*,
-   and export the table to csv with ```COPY network.la_links TO './Data/Network/CSV/LA_county/links.csv' DELIMITER ',' CSV HEADER;```
+   and export the table to csv with ```COPY network.la_links TO
+  '/absolute/path/to/links.csv' DELIMITER ',' CSV HEADER;``` (mgiht have
+  permission issues, a better way is to
+  import Postgresql database to QGIS and export to csv using QGIS)
 
 7. Create a layer of voronoi polygons of nodes (QGIS->Geometry tools->Voronoi
    polygons), import the shapefile to PostGIS. Use buffer to overlap all taz
