@@ -28,7 +28,7 @@ def assign_traffic(algorithm='FW'):
     l = ue.solver_fw(graph, update=True)
     delta_time = time.time() - start_delta_time
     print 'DONE',str(datetime.timedelta(seconds=delta_time))
-    #d.draw_delays(graph, l, width=2)
+    d.draw_delays(graph, l, width=2)
     delay = np.asarray([link.delay for link in graph.links.itervalues()])
     ffdelay = np.asarray([link.ffdelay for link in graph.links.itervalues()])
     edge_ratios = delay/ffdelay
