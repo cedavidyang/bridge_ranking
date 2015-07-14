@@ -20,7 +20,7 @@ def assign_traffic(algorithm='FW'):
     # generate the graph
     theta = matrix([0.0, 0.0, 0.0, 0.15])
     graph = LA_county(datapath='./', parameters=theta,delaytype='Polynomial', cur_gis=cur_gis)
-    #d.draw(graph)
+    d.draw(graph)
     # traffic assignment
     #l,x = ue.solver(graph, update=True, full=True)
     start_delta_time = time.time()
