@@ -8,6 +8,7 @@ __author__ = 'cedavidyang'
 
 import psycopg2
 import numpy as np
+import scipy.optimize as op
 import matplotlib.pyplot as plt
 from pyDUE.util import distance_on_unit_sphere
 
@@ -198,6 +199,17 @@ def bridge_correlation(bridge_db, corr_length):
             corr[j_indx,i_indx] = rho_ij
 
     return corr
+
+def find_one_year_MTM(MTM2):
+    dim = MTM2.shape[0]
+    MTM1 = np.zeros((dim,dim))
+    MTM1[dim-1,dim-1] = 1.
+    for i in range(dim-2, -1, -1):
+        MTM1[i,i] = np.sqrt(MTM2[i,i])
+        for j in range(i+1,dim):
+            MTM1[i,j] = (MTM2[i,j]-np.dot(MTM1[i,i+1:j], MTM1[i+1:j,j]))/(MTM1[i,i]+MTM1[j,j])
+    return MTM1
+
 
 if __name__ == '__main__':
     import itertools
