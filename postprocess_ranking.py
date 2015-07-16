@@ -47,11 +47,21 @@ if __name__ == '__main__':
     globals()['bridge_db'] = my_shelf['bridge_db']
     my_shelf.close()
 
-    filename = os.path.join(os.path.abspath('./'), 'figures', 'ranking_LA 2015-07-14 09-41-38.529000', 'data_shelve.out')
-    my_shelf = shelve.open(filename, 'r')
-    nsmp += my_shelf['nsmp']
-    bridge_risk_data = np.vstack((bridge_risk_data, my_shelf['bridge_risk_data']))
-    my_shelf.close()
+    folders = ['ranking_LA 2015-07-14 09-41-38.529000','ranking_LA 2015-07-15 08-30-07.403000',
+             'ranking_LA 2015-07-16 09-53-42.157000']
+
+    for folder in folders:
+        filename = os.path.join(os.path.abspath('./'), 'figures', folder, 'data_shelve.out')
+        my_shelf = shelve.open(filename, 'r')
+        nsmp += my_shelf['nsmp']
+        bridge_risk_data = np.vstack((bridge_risk_data, my_shelf['bridge_risk_data']))
+        my_shelf.close()
+
+    def millions(x, pos):
+        'The two args are the value and tick position'
+        #return '%2.1fM' % (x*1e-6)
+        return '{:2.1f}M'.format(x*1e-6)
+    formatter = FuncFormatter(millions)
 
     mean_risk = np.mean(bridge_risk_data, axis=0)
     bridge_name = np.asarray(bridge_db, dtype=object)[:,0].astype(str)
