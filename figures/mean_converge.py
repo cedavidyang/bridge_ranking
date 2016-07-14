@@ -17,7 +17,10 @@ if __name__ == '__main__':
     my_shelf.close()
 
     folders = ['ranking_LA 2015-07-14 09-41-38.529000','ranking_LA 2015-07-15 08-30-07.403000',
-             'ranking_LA 2015-07-16 09-53-42.157000']
+             'ranking_LA 2015-07-16 09-53-42.157000', 'ranking_LA 2015-07-17 02-39-39.633756',
+             'ranking_LA 2015-07-17 10-28-41.563000', 'ranking_LA 2015-07-17 14-12-51.180460',
+             'ranking_LA 2015-07-18 09-03-27.937000', 'ranking_LA 2015-07-20 17-51-01.428000',
+             'ranking_LA 2015-07-22 19-41-07.027000', 'ranking_LA 2015-07-26 22-58-54.961000']
 
     for folder in folders:
         filename = os.path.join(os.path.abspath('./'), 'figures', folder, 'data_shelve.out')
@@ -32,20 +35,32 @@ if __name__ == '__main__':
         return '{:2.1f}M'.format(x*1e-6)
     formatter = FuncFormatter(millions)
 
-    nfig = 5
-    for f in xrange(19):
-        fig, axs = plt.subplots(nfig, 1, sharex=True)
-        for i in xrange(nfig):
-            bridge_indx = i+nfig*f
-            #bridge_indx = i
-            axs[i].yaxis.set_major_formatter(formatter)
-            axs[i].plot(np.arange(nsmp)+1, np.cumsum(bridge_risk_data.T[bridge_indx])/(np.arange(nsmp)+1))
-            #axs[i].locator_params(axis='y', nbins=3)
-            start, end = axs[i].get_ylim()
-            axs[i].yaxis.set_ticks(np.linspace(start, end, 3))
-            axs[i].get_yaxis().set_label_coords(-0.1,0.5)
-            axs[i].set_ylabel(bridge_db[bridge_indx][0].lstrip())
+    ## display in subfigures
+    #nfig = 5
+    #for f in xrange(19):
+        #fig, axs = plt.subplots(nfig, 1, sharex=True)
+        #for i in xrange(nfig):
+            #bridge_indx = i+nfig*f
+            ##bridge_indx = i
+            #axs[i].yaxis.set_major_formatter(formatter)
+            #axs[i].plot(np.arange(nsmp)+1, np.cumsum(bridge_risk_data.T[bridge_indx])/(np.arange(nsmp)+1))
+            ##axs[i].locator_params(axis='y', nbins=3)
+            #start, end = axs[i].get_ylim()
+            #axs[i].yaxis.set_ticks(np.linspace(start, end, 3))
+            #axs[i].get_yaxis().set_label_coords(-0.1,0.5)
+            #axs[i].set_ylabel(bridge_db[bridge_indx][0].lstrip())
+
+    # display in one figure
+    fig, ax = plt.subplots(1, 1, sharex=True)
+    ax.yaxis.set_major_formatter(formatter)
+    mean_risk = np.mean(bridge_risk_data, axis=0)
+    for bridge_indx in mean_risk.argsort()[-10:]:
+        ax.plot(np.arange(nsmp)+1, np.cumsum(bridge_risk_data.T[bridge_indx])/(np.arange(nsmp)+1),
+                label=bridge_db[bridge_indx][0].lstrip())
+        #axs[i].locator_params(axis='y', nbins=3)
 
     plt.xlabel('Number of samples')
+    plt.ylim((0, 100e6))
+    plt.ylabel('Risk of bridge failures')
     plt.ion()
     plt.show()

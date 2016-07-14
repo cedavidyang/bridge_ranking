@@ -48,7 +48,10 @@ if __name__ == '__main__':
     my_shelf.close()
 
     folders = ['ranking_LA 2015-07-14 09-41-38.529000','ranking_LA 2015-07-15 08-30-07.403000',
-             'ranking_LA 2015-07-16 09-53-42.157000']
+             'ranking_LA 2015-07-16 09-53-42.157000', 'ranking_LA 2015-07-17 02-39-39.633756',
+             'ranking_LA 2015-07-17 10-28-41.563000', 'ranking_LA 2015-07-17 14-12-51.180460',
+             'ranking_LA 2015-07-18 09-03-27.937000', 'ranking_LA 2015-07-20 17-51-01.428000',
+             'ranking_LA 2015-07-22 19-41-07.027000', 'ranking_LA 2015-07-26 22-58-54.961000']
 
     for folder in folders:
         filename = os.path.join(os.path.abspath('./'), 'figures', folder, 'data_shelve.out')
@@ -83,3 +86,8 @@ if __name__ == '__main__':
 
     rank2 = bridge_name[safety.argsort()][-10:]
     rank3 = bridge_name[sufficiency.argsort()][-10:]
+
+    rank1 = [rank.lstrip() for rank in rank1]
+    risk1 = mean_risk[mean_risk.argsort()][-10:]
+    rank2 = [rank.lstrip() for rank in rank2]
+    rank3 = [rank.lstrip() for rank in rank3]
