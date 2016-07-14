@@ -35,7 +35,7 @@ t = 10
 cs_dist = pytraffic.condition_distribution(t, bridge_db, pmatrix)
 cost0 = social_cost(delay0, distance0, t)
 # number of smps
-nsmp = int(1000)
+nsmp = int(2000)
 
 #def loop_over_bridges(bridge_indx, bookkeeping):
 def loop_over_bridges(bridge_indx):
