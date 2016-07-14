@@ -1,7 +1,7 @@
 import numpy as np
 import scipy.stats as stats
 import scipy.optimize as op
-from pyDUE.util import distance_on_unit_sphere
+# from pyDUE.util import distance_on_unit_sphere
 
 def nataf_transform(rho1, x1rv, x2rv=None, xtol=1e-6, rtol=1e-5, nsmp=1e4, nconv=1e3, maxiter=100):
     """ rho1: coefficient of correlation of standard normal dist

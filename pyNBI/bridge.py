@@ -8,6 +8,7 @@ __author__ = 'cedavidyang'
 
 import psycopg2
 import numpy as np
+import scipy.optimize as op
 import matplotlib.pyplot as plt
 from pyDUE.util import distance_on_unit_sphere
 
@@ -171,12 +172,18 @@ def transition_matrix(years, component='deck'):
     #return pmatrix_mean
 
 
+def int_to_degree(int_value):
+    degree = np.floor(int_value/1e6)
+    minute = np.floor((int_value - int(1e6)*degree)/1e4)
+    second = int_value % int(1e4) / 100.
+    return degree+minute/60.+second/3600.
+
 def bridge_correlation(bridge_db, corr_length):
-    def int_to_degree(int_value):
-        degree = np.floor(int_value/1e6)
-        minute = np.floor((int_value - int(1e6)*degree)/1e4)
-        second = int_value % int(1e4) / 100.
-        return degree+minute/60.+second/3600.
+    #def int_to_degree(int_value):
+        #degree = np.floor(int_value/1e6)
+        #minute = np.floor((int_value - int(1e6)*degree)/1e4)
+        #second = int_value % int(1e4) / 100.
+        #return degree+minute/60.+second/3600.
     corr = np.ones((len(bridge_db),len(bridge_db)))
     for i_indx, bridge_i in enumerate(bridge_db):
         lati = int_to_degree(bridge_i[1])
@@ -192,6 +199,17 @@ def bridge_correlation(bridge_db, corr_length):
             corr[j_indx,i_indx] = rho_ij
 
     return corr
+
+def find_one_year_MTM(MTM2):
+    dim = MTM2.shape[0]
+    MTM1 = np.zeros((dim,dim))
+    MTM1[dim-1,dim-1] = 1.
+    for i in range(dim-2, -1, -1):
+        MTM1[i,i] = np.sqrt(MTM2[i,i])
+        for j in range(i+1,dim):
+            MTM1[i,j] = (MTM2[i,j]-np.dot(MTM1[i,i+1:j], MTM1[i+1:j,j]))/(MTM1[i,i]+MTM1[j,j])
+    return MTM1
+
 
 if __name__ == '__main__':
     import itertools
@@ -224,32 +242,38 @@ if __name__ == '__main__':
     ##plt.plot(time_span, pmatrix_array[:,8-7,8-7], 'o-')
     ##plt.show()
 
-    # median transition matrix
-    pmatrix_deck = transition_matrix(np.arange(1992,2013,dtype='int'), component='deck')
-    pmatrix_super = transition_matrix(np.arange(1992,2013,dtype='int'), component='superstructure')
-    pmatrix_sub = transition_matrix(np.arange(1992,2013,dtype='int'), component='substructure')
-    np.save('pmatrix.npy', {'deck': pmatrix_deck, 'super': pmatrix_super, 'sub': pmatrix_sub})
+    ## median transition matrix
+    #pmatrix_deck = transition_matrix(np.arange(1992,2013,dtype='int'), component='deck')
+    #pmatrix_super = transition_matrix(np.arange(1992,2013,dtype='int'), component='superstructure')
+    #pmatrix_sub = transition_matrix(np.arange(1992,2013,dtype='int'), component='substructure')
+    #np.save('pmatrix.npy', {'deck': pmatrix_deck, 'super': pmatrix_super, 'sub': pmatrix_sub})
 
-    ## cs evolution
-    #pmatrix = np.load('pmatrix.npy')
-    #cs0 = np.array([1, 0, 0, 0, 0, 0, 0, 0], dtype='float')
-    #service_life = np.arange(0, 102, 2)
-    #cs_array = []
-    #for indx, year in enumerate(service_life):
-        #cs = np.dot(np.linalg.matrix_power(pmatrix.T,indx),cs0)
-        #cs_array.append(cs)
-    #cs_array = np.array(cs_array)
-    ##plt.plot(service_life, cs_array)
-    #cs=8
-    #for csi,ms in zip(cs_array.T, itertools.cycle('o>^+*')):
-        #plt.plot(service_life, csi, marker=ms, label='condition state {}'.format(cs))
-        #cs -= 1
-    #plt.xlabel('Year', fontsize=12)
-    #plt.ylabel('Probability')
-    #annotate_text = '{label}'
-    #datacursor(formatter=annotate_text.format,display='multiple', draggable=True,
-            #bbox=None, fontsize=12,
-            #arrowprops=dict(arrowstyle='-|>', connectionstyle='arc3', facecolor='k'))
+    # cs evolution
+    pmatrix = np.load('pmatrix.npy')
+    pmatrix = pmatrix.item()['sub'][:-1,:-1]
+    cs0 = np.array([1, 0, 0, 0, 0, 0, 0], dtype='float')
+    service_life = np.arange(0, 102, 2)
+    cs_array = []
+    for indx, year in enumerate(service_life):
+        cs = np.dot(np.linalg.matrix_power(pmatrix.T,indx),cs0)
+        cs_array.append(cs)
+    cs_array = np.array(cs_array)
+    #plt.plot(service_life, cs_array)
+    cs=7
+    for csi,ms in zip(cs_array.T, itertools.cycle('o>^+*')):
+        if cs == 7:
+            plt.plot(service_life, csi, marker=ms, label='condition rating $\ge8$')
+        elif cs == 1:
+            plt.plot(service_life, csi, marker=ms, label='condition rating $\le2$')
+        else:
+            plt.plot(service_life, csi, marker=ms, label='condition rating {}'.format(cs+1))
+        cs -= 1
+    plt.xlabel('Year', fontsize=12)
+    plt.ylabel('Probability')
+    annotate_text = '{label}'
+    datacursor(formatter=annotate_text.format,display='multiple', draggable=True,
+            bbox=None, fontsize=12,
+            arrowprops=dict(arrowstyle='-|>', connectionstyle='arc3', facecolor='k'))
 
     ## reliability evolution
     #pmatrix = np.load('pmatrix.npy')

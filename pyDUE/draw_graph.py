@@ -106,7 +106,7 @@ def draw_delays(graph, linkflows=None, G=None, width=7, alpha=0.5, levels=[1.5, 
     link_flow = np.asarray([link.flow for link in graph.links.values()])
     edge_ratios = link_flow/link_cap
     cs=nx.draw_networkx_edges(G, pos, edgelist=edges, width=width, alpha=alpha,
-            edge_color=edge_ratios, edge_cmap=plt.cm.bwr, edge_vmin=None, edge_vmax=None, arrows=False)
+            edge_color=edge_ratios, edge_cmap=plt.cm.Greys, edge_vmin=None, edge_vmax=None, arrows=False)
 
     fig = plt.gcf()
     ax = plt.gca()
