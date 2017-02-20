@@ -16,7 +16,7 @@ GIS data in shapefile can be downloaded from OpenStreetMap (https://www.openstre
 
 TAZ file for LA can be downloaded from http://gisdata.scag.ca.gov/SitePages/GIS%20Library.aspx
 
-CTPP ODs can be downloaded from http://www.fhwa.dot.gov/planning/census_issues/ctpp
+CTPP ODs can be downloaded from http://www.fhwa.dot.gov/planning/census_issues/ctpp and http://ctpp.transportation.org/Pages/5-Year-Data.aspx
 
 Bridge data can be downloaded from http://www.fhwa.dot.gov/bridge/nbi/ascii.cfm
 
