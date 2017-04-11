@@ -277,7 +277,7 @@ def solver_fw(graph=None, update=False, full=False, data=None, SO=False, e=1e-4,
         #step = op.minimize(T, x0=0.5, jac=True, bounds=[(0.,1.)]).x
         def T(step):
             return  Tf_func(f+step*p)
-        step = op.minimize(T, 0.5, bounds=[(0., 1.)]).x[0]
+        step = op.minimize(T, 0.5, method='L-BFGS-B', bounds=[(0., 1.)]).x[0]
         #step = 1./(k+2)
         # Step 4 (Update)
         f += step*p

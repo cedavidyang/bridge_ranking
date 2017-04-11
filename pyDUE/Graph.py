@@ -31,6 +31,7 @@ class Graph:
         self.numnodes += 1
         self.nodes_position[self.numnodes] = position
         self.nodes[self.numnodes] = Node(position)
+        return self.numnodes
         
         
     def add_nodes_from_list(self, list):
