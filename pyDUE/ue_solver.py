@@ -13,6 +13,7 @@ from kktsolver import get_kktsolver
 import networkx as nx
 import itertools
 import scipy.optimize as op
+from scipy.misc import factorial
 import copy
 from util import create_networkx_graph
 import logging
@@ -46,12 +47,12 @@ def constraints(graph, rm_redundant = False):
 def nodelink_incidence(graph, rm_redundant = False):
     """
     get node-link incidence matrix
-    
+
     Parameters
     ----------
     graph: graph object
     rm_redundant: if True, remove redundant constraints for the ue solver
-    
+
     Return value
     ------------
     C: matrix of incidence node-link
@@ -71,6 +72,75 @@ def nodelink_incidence(graph, rm_redundant = False):
             ind = find_basis(M.trans())
             return C[ind,:], ind
     return C, range(m)
+
+
+def linkpath_incidence(graph):
+    """
+    get link-path incidence matrix
+
+    Parameters
+    ----------
+    graph: graph object
+
+    Return value
+    ------------
+    C: matrix of incidence link-path
+    """
+    nnode, nlink = graph.numnodes, graph.numlinks
+    npair = len(graph.ODs.keys())
+
+    G = nx.DiGraph()
+    G.add_nodes_from(graph.nodes.keys())
+    G.add_edges_from([(key[0],key[1]) for key in graph.links.keys()])
+    indcol = -1
+    # C = np.ones((nlink, npair*nlink))
+    entries, I, J = [], [], []
+    for OD in graph.ODs.itervalues():
+        for nodes_on_path in nx.all_simple_paths(G, OD.o, OD.d):
+            graph.add_path_from_nodes(nodes_on_path)
+            indcol += 1
+            for u,v,route in graph.links.keys():
+                indrow = graph.indlinks[(u,v,route)]
+                if str([u,v])[1:-1] in str(nodes_on_path)[1:-1]:
+                    entries.append(1.0); I.append(indrow), J.append(indcol)
+    C = spmatrix(entries, I, J, (nlink,indcol+1))
+    return C
+
+
+def pathOD_incidence(graph, haspath=False):
+    """
+    get path-OD incidence matrix
+
+    Parameters
+    ----------
+    graph: graph object
+    haspath: if True, simple has already been set before
+
+    Return value
+    ------------
+    C: matrix of incidence path-OD
+    """
+    nnode, nlink = graph.numnodes, graph.numlinks
+    npair = len(graph.ODs.keys())
+
+    G = nx.DiGraph()
+    G.add_nodes_from(graph.nodes.keys())
+    G.add_edges_from([(key[0],key[1]) for key in graph.links.keys()])
+    if not haspath:
+        for OD in graph.ODs.itervalues():
+            for nodes_on_path in nx.all_simple_paths(G, OD.o, OD.d):
+                graph.add_path_from_nodes(nodes_on_path)
+    npath = len(graph.paths)
+    entries, I, J = [], [], []
+    for OD in graph.ODs.itervalues():
+        u = OD.o; v=OD.d
+        indcol = graph.indods[(u,v)]
+        for path in graph.paths.iterkeys():
+            if (u == path[0]) and (v == path[-1]):
+                indrow = graph.indpaths[path]
+                entries.append(1.0); I.append(indrow), J.append(indcol)
+    C = spmatrix(entries, I, J, (npath, npair))
+    return C
 
 
 def get_demands(graph, ind, node_id):
@@ -226,9 +296,150 @@ def solver(graph=None, update=False, full=False, data=None, SO=False):
     if full: return linkflows, x    
     return linkflows
 
-#@profile
+
 def solver_fw(graph=None, update=False, full=False, data=None, SO=False, e=1e-4, niter=1e4, verbose=False):
     """Frank-Wolfe algorithm for UE according to Patriksson (1994)"""
+    nnode = len(graph.nodes.keys())
+    npair = len(graph.ODs.keys())
+    nlink = len(graph.links.keys())
+    nrow = nnode*npair
+    ncol = nlink*npair
+    # Step 0 (Initialization) Let f0 be a feasible solution to [TAP], LBD=0,
+    # e>0, k=0 (using Dijkstra's shortest path algorithm in networkx
+    LBD = 0.
+    f = solver_kernal(graph)
+    def Tf_func(f):
+        linkflows = f
+        # linkflows = matrix(0.0, (nlink,1))
+        # for k in xrange(npair): linkflows += f[k*nlink:(k+1)*nlink]
+        return sum([graph.links[link_key].delayfunc.compute_obj(linkflows[link_indx]) for link_key, link_indx
+                in graph.indlinks.iteritems()])
+    def dTf_func(f):
+        linkflows = f
+        # linkflows = matrix(0.0, (nlink,1))
+        # for k in xrange(npair): linkflows += f[k*nlink:(k+1)*nlink]
+        dTf = nlink*[0.0]
+        for link_key, link_indx in graph.indlinks.iteritems():
+            dTfi = graph.links[link_key].delayfunc.compute_delay(linkflows[link_indx])
+            dTf[link_indx] = dTfi
+        # dTf = matrix(npair*dTf)
+        return matrix(dTf)
+    for k in xrange(int(niter)):
+        # Step 1 (Search direction generation) LP problem
+        Tf = Tf_func(f)
+        dTf = dTf_func(f)
+        #G = spmatrix(-1.0, range(ncol), range(ncol))
+        #h = matrix(ncol*[0.0])
+        #y = solvers.lp(dTf, G, h, Aeq, beq)['x']
+        y = solver_kernal(graph,f)
+        p = y - f
+        # Step 2 (Convergence check)
+        def T_linear(x):
+            res = Tf + dTf.T*(x-f)
+            return res[0,0]
+        LBD = np.maximum(LBD, T_linear(y))
+        if verbose:
+            print 'Iter #{}a: Tf={}, T_linear={}, LBD={}, e={}'.format(k+1, Tf, T_linear(y), LBD, e)
+        if LBD!=0 and (Tf - LBD) / LBD < e:
+            break
+        # Step 3 (Line search)
+        #def T(step):
+            #obj, jac = Tf_func(f+step*p), dTf_func(f+step*p).T*p
+            #return [obj, np.array(jac[0])]
+        #step = op.minimize(T, x0=0.5, jac=True, bounds=[(0.,1.)]).x
+        def T(step):
+            return  Tf_func(f+step*p)
+        step = op.minimize(T, 0.5, method='L-BFGS-B', bounds=[(0., 1.)]).x[0]
+        #step = 1./(k+2)
+        # Step 4 (Update)
+        f += step*p
+        f = matrix(f, tc='d')
+        # Step 5 (Convergence check)
+        if verbose:
+            print 'Iter #{}b: Tf={}, step={}, LBD={}, e={}'.format(k+1, Tf_func(f), step, LBD, e)
+        if LBD!=0 and (Tf_func(f) - LBD) / LBD < e:
+            break
+
+    linkflows = f
+
+    if update:
+        logging.info('Update link flows, delays in Graph.'); graph.update_linkflows_linkdelays(linkflows)
+        logging.info('Update path delays in Graph.'); graph.update_pathdelays()
+
+    if full: return linkflows, dTf_func(f).T*f
+    return linkflows
+
+
+def solver_fw_path(graph=None, update=False, full=False, data=None, SO=False, e=1e-4, niter=1e4, verbose=False):
+    """Frank-Wolfe algorithm (with respect to path flow)
+       for UE according to Patriksson (1994)"""
+    nnode = len(graph.nodes.keys())
+    npair = len(graph.ODs.keys())
+    nlink = len(graph.links.keys())
+    # Step 0 (Initialization) Let f0 be a feasible solution to [TAP], LBD=0,
+    # e>0, k=0 (using Dijkstra's shortest path algorithm in networkx
+    LBD = 0.
+    lpmtx = linkpath_incidence(graph)
+    pf, pc, odc = solver_kernal_path(graph, lpmtx)
+    def Tf_func(pf):
+        linkflows = lpmtx*pf
+        return sum([graph.links[link_key].delayfunc.compute_obj(linkflows[link_indx])
+            for link_key, link_indx in graph.indlinks.iteritems()])
+    def dTh_func(pf):
+        linkflows = lpmtx*pf
+        dTf = matrix(0.0, (nlink,1))
+        for link_key, link_indx in graph.indlinks.iteritems():
+            dTfi = graph.links[link_key].delayfunc.compute_delay(linkflows[link_indx])
+            dTf[link_indx] = dTfi
+        dTh = lpmtx.T*dTf
+        return dTh
+    for k in xrange(int(niter)):
+        # Step 1 (Search direction generation) LP problem
+        Tf = Tf_func(pf)
+        dTh = dTh_func(pf)
+        y, pc, odc = solver_kernal_path(graph, lpmtx, pflow=pf)
+        p = y - pf
+        # Step 2 (Convergence check)
+        def T_linear(x):
+            res = Tf + dTh.T*(x-pf)
+            return res[0,0]
+        LBD = np.maximum(LBD, T_linear(y))
+        if verbose:
+            print 'Iter #{}a: Tf={}, T_linear={}, LBD={}, e={}'.format(k+1, Tf, T_linear(y), LBD, e)
+        if LBD!=0 and (Tf - LBD) / LBD < e:
+            break
+        # Step 3 (Line search)
+        def linesearch(step):
+            return  Tf_func(pf+p*step[0])
+        step = op.minimize(linesearch, [0.5], method='L-BFGS-B', bounds=[(0., 1.)]).x[0]
+        # step = 1./(k+2)    # MSA
+        # Step 4 (Update)
+        pf += step*p
+        pf = matrix(pf, tc='d')
+        # Step 5 (Convergence check)
+        if verbose:
+            print 'Iter #{}b: Tf={}, step={}, LBD={}, e={}'.format(k+1, Tf_func(pf), step, LBD, e)
+        if LBD!=0 and abs(Tf_func(pf) - LBD) / LBD < e:
+            break
+
+    npath = len(graph.paths)
+    pathflows = pf
+    linkflows = lpmtx*pathflows
+
+    if update:
+        logging.info('Update link flows, delays in Graph.'); graph.update_linkflows_linkdelays(linkflows)
+        logging.info('Update path delays in Graph.'); graph.update_pathdelays()
+
+    if full: return pathflows, linkflows, dTf_func(pf).T*pf
+    return pathflows, linkflows
+
+
+def solver_rue(graph=None, update=False, full=False, data=None, SO=False, e=1e-4, niter=1e4, verbose=False):
+    """robust user equilibrium"""
+    # initial link flow
+    f = solver_kernal(graph)
+    DeltaLR
+
     nnode = len(graph.nodes.keys())
     npair = len(graph.ODs.keys())
     nlink = len(graph.links.keys())
@@ -298,7 +509,7 @@ def solver_fw(graph=None, update=False, full=False, data=None, SO=False, e=1e-4,
     if full: return linkflows, dTf_func(f).T*f
     return linkflows
 
-#@profile
+
 def solver_sue(graph=None, update=False, full=False, data=None, SO=False, verbose=False, update_func=None,
         bridge_indx=None, **smpargs):
     """Stochastic user equilibrium (SUE) based on Sheffi (1982)
@@ -381,7 +592,7 @@ def solver_sue(graph=None, update=False, full=False, data=None, SO=False, verbos
     if full: return linkflows,total_delay
     return linkflows
 
-#@profile
+
 def solver_kernal(graph=None, flow=None, algorithm='Dijkstra', output='dense'):
     nnode = len(graph.nodes.keys())
     npair = len(graph.ODs.keys())
@@ -393,12 +604,27 @@ def solver_kernal(graph=None, flow=None, algorithm='Dijkstra', output='dense'):
     G.add_nodes_from(graph.nodes.keys())
     G.add_edges_from([(key[0],key[1]) for key in graph.links.keys()])
     for u,v in G.edges():
-        link = graph.links[(u,v,1)]
         if flow is None:
-            G[u][v]['cost'] = link.delayfunc.compute_delay(link.flow)
+            G[u][v]['cost'] = 0.
+            linklabel = 1
+            while True:
+                try:
+                    link = graph.links[(u,v,linklabel)]
+                    G[u][v]['cost'] += link.delayfunc.compute_delay(link.flow)
+                    linklabel +=1
+                except KeyError:
+                    break
         else:
-            indx = graph.indlinks[(u,v,1)]
-            G[u][v]['cost'] = link.delayfunc.compute_delay(flow[indx])
+            G[u][v]['cost'] = 0.
+            linklabel = 1
+            while True:
+                try:
+                    indx = graph.indlinks[(u,v,linklabel)]
+                    link = graph.links[(u,v,linklabel)]
+                    G[u][v]['cost'] += link.delayfunc.compute_delay(flow[indx])
+                    linklabel +=1
+                except KeyError:
+                    break
 
     f = matrix(0.0,(ncol,1))
     iod = 0
@@ -411,7 +637,7 @@ def solver_kernal(graph=None, flow=None, algorithm='Dijkstra', output='dense'):
                 indx=iod*nlink+graph.indlinks[(u,v,1)]
                 f[indx,0] += OD.flow
             npath += 1
-        f = f/npath
+        f[(iod*nlink):(iod*nlink+nlink)] = f[(iod*nlink):(iod*nlink+nlink)]/npath
         #nodes_on_path = nx.dijkstra_path(G, OD.o, OD.d, weight='cost')
         #for indx in xrange(len(nodes_on_path)-1):
             #u = nodes_on_path[indx]
@@ -420,7 +646,64 @@ def solver_kernal(graph=None, flow=None, algorithm='Dijkstra', output='dense'):
             #f[indx,0] = OD.flow
         iod += 1
 
-    return f
+    linkflows = matrix(0.0, (nlink,1))
+    for k in xrange(npair): linkflows += f[k*nlink:(k+1)*nlink]
+
+    return linkflows
+
+
+def solver_kernal_path(graph, lpmtx, pflow=None, algorithm='Dijkstra', output='dense'):
+    nnode = len(graph.nodes.keys())
+    npair = len(graph.ODs.keys())
+    nlink = len(graph.links.keys())
+    if pflow is not None:
+        flow = lpmtx*pflow
+
+    G = nx.DiGraph()
+    G.add_nodes_from(graph.nodes.keys())
+    G.add_edges_from([(key[0],key[1]) for key in graph.links.keys()])
+    for u,v in G.edges():
+        link = graph.links[(u,v,1)]
+        if pflow is None:
+            G[u][v]['cost'] = 0.
+            G[u][v]['cost'] += link.delayfunc.compute_delay(link.flow)
+        else:
+            G[u][v]['cost'] = 0.
+            indx = graph.indlinks[(u,v,1)]
+            G[u][v]['cost'] += link.delayfunc.compute_delay(flow[indx])
+
+    iod = 0
+    odentries, pathfentries, Iod, Ipath = [], [], [], []
+    for odID, OD in graph.ODs.iteritems():
+        Iod.append(graph.indods[odID])
+        npath = 0
+        for nodes_on_path in nx.all_shortest_paths(G, OD.o, OD.d, weight='cost'):
+            indpath = graph.indpaths[tuple(nodes_on_path)]
+            Ipath.append(indpath)
+            npath += 1
+        for x in xrange(npath): pathfentries.append(OD.flow/npath)
+        cost = 0.
+        for indx in xrange(len(nodes_on_path)-1):
+            u = nodes_on_path[indx]
+            v = nodes_on_path[indx+1]
+            cost += G[u][v]['cost']
+        odentries.append(cost)
+    odcost = spmatrix(odentries, Iod, len(Iod)*[0], (npair, 1))
+    npath = len(graph.paths)
+    pathf = spmatrix(pathfentries, Ipath, len(Ipath)*[0], (npath, 1))
+
+    pathcost = matrix(0., (npath,1))
+    for nodes_on_path in graph.paths.iterkeys():
+        indpath = graph.indpaths[nodes_on_path]
+        cost = 0.
+        for indx in xrange(len(nodes_on_path)-1):
+            u = nodes_on_path[indx]
+            v = nodes_on_path[indx+1]
+            cost += G[u][v]['cost']
+        pathcost[indpath] = cost
+
+    return pathf, pathcost, odcost
+
 
 def solver_kernal_deprecated(graph, f, Aeq, beq, nlink):
     ncol = Aeq.size[1]

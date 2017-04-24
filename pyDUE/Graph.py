@@ -24,8 +24,8 @@ class Graph:
         self.indlinks = {} # indexation for matrix generations
         self.indods = {} # indexation for matrix generations
         self.indpaths = {} # indexation for matrix generations
-        
-    
+
+
     def add_node(self, position=None):
         """Add a node with coordinates as a tuple"""
         self.numnodes += 1
@@ -119,7 +119,7 @@ class Graph:
         for origin, destination, flow in list: self.add_od(origin, destination, flow)
    
    
-    def add_path(self, link_ids):
+    def add_path(self, link_ids, node_ids=None):
         """Add a path with link_ids a list of link ids"""
         origin = link_ids[0][0]
         destination = link_ids[len(link_ids)-1][1]
@@ -138,9 +138,11 @@ class Graph:
         self.ODs[(origin, destination)].numpaths += 1
         route = self.ODs[(origin, destination)].numpaths
         path = Path(origin, destination, route, links, 0.0, delay, ffdelay)
-        self.indpaths[(origin, destination, route)] = self.numpaths
+        if node_ids is None:
+            node_ids = [origin]+[graph.links[link][2] for link in links]
+        self.indpaths[tuple(node_ids)] = self.numpaths
         self.numpaths += 1
-        self.paths[(origin, destination, route)] = path
+        self.paths[tuple(node_ids)] = path
         self.ODs[(origin, destination)].paths[(origin, destination, route)] = path
         for link in links:
             self.links[(link.startnode, link.endnode, link.route)].numpaths += 1
@@ -150,7 +152,7 @@ class Graph:
     def add_path_from_nodes(self, node_ids):
         """Add a path from a list of nodes"""
         link_ids = [(node_ids[k], node_ids[k+1], 1) for k in range(len(node_ids)-1)]
-        self.add_path(link_ids)
+        self.add_path(link_ids, node_ids)
     
         
     def visualize(self, general=True, nodes=False, links=False, ODs=False, paths=False, only_pos_flows=False, tol=1e-3):
