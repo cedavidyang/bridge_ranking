@@ -86,9 +86,9 @@ def los_angeles(parameters=None, delaytype='None', noise=0.0, path=None):
 def los_angeles_2(parameters=None, delaytype='None'):
     """Generate larger map of L.A. with 664 links and 194 nodes
     """
-    nodes = np.genfromtxt('LA_medium_data/nodes_LA_toy.csv', delimiter = ',', skiprows = 1)
+    nodes = np.genfromtxt('LA_medium_data/nodes_LA_toy.csv', delimiter = ',', skip_header = 1)
     nodes = nodes[:,1:3]
-    links = np.genfromtxt('LA_medium_data/links_qgis_cap.csv', delimiter = ',', skiprows = 1)
+    links = np.genfromtxt('LA_medium_data/links_qgis_cap.csv', delimiter = ',', skip_header = 1)
     tmp = links
     links = []
     speed_limit_freeway = 33.33 #unit: m/s
@@ -174,10 +174,10 @@ def braess_paradox():
 
 
 def test_LA(datapath='', parameters=None, delaytype='None'):
-    nodes = np.genfromtxt(datapath+'Data/Network/CSV/test_LA/test_nodes.csv', delimiter = ',', skiprows = 1)
+    nodes = np.genfromtxt(datapath+'Data/Network/CSV/test_LA/test_nodes.csv', delimiter = ',', skip_header = 1)
     nodes = nodes[:,1:3]
-    #link_data = np.genfromtxt('Data/Network/CSV/test_LA/test_links.csv', delimiter = ',', skiprows = 1)
-    link_data = np.genfromtxt(datapath+'Data/Network/CSV/test_LA/test_links_C.csv', delimiter = ',', skiprows=1)
+    #link_data = np.genfromtxt('Data/Network/CSV/test_LA/test_links.csv', delimiter = ',', skip_header = 1)
+    link_data = np.genfromtxt(datapath+'Data/Network/CSV/test_LA/test_links_C.csv', delimiter = ',', skip_header=1)
 
     if delaytype=='None':
         links = []
@@ -225,9 +225,9 @@ def test_LA(datapath='', parameters=None, delaytype='None'):
 
 
 def LA_county(datapath='', parameters=None, delaytype='None', cur_gis=None):
-    nodes = np.genfromtxt(datapath+'Data/Network/CSV/LA_county/nodes.csv', delimiter = ',', skiprows = 1)
+    nodes = np.genfromtxt(datapath+'Data/Network/CSV/LA_county/nodes.csv', delimiter = ',', skip_header = 1)
     nodes = nodes[:,:2]
-    link_data = np.genfromtxt('Data/Network/CSV/LA_county/links.csv', delimiter = ',', skiprows = 1)
+    link_data = np.genfromtxt('Data/Network/CSV/LA_county/links.csv', delimiter = ',', skip_header = 1)
     link_data = np.hstack((link_data[:,[-1]], link_data[:,:-1]))
 
     if delaytype=='None':

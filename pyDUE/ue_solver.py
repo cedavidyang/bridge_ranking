@@ -419,7 +419,7 @@ def solver_fw_path(graph=None, update=False, full=False, data=None, SO=False, e=
         # Step 5 (Convergence check)
         if verbose:
             print 'Iter #{}b: Tf={}, step={}, LBD={}, e={}'.format(k+1, Tf_func(pf), step, LBD, e)
-        if LBD!=0 and abs(Tf_func(pf) - LBD) / LBD < e:
+        if LBD!=0 and (Tf_func(pf) - LBD) / LBD < e:
             break
 
     npath = len(graph.paths)
