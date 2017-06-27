@@ -14,7 +14,7 @@ from pyDUE.util import distance_on_unit_sphere
 def select_data(db, query_name, query_condition):
     """ get deck condition state data according to query dictionary """
     # open database
-    conn = psycopg2.connect("dbname='nbi' user='amadeus' host='localhost' password=''")
+    conn = psycopg2.connect("dbname='nbi' user='postgres' host='localhost' password='123456'")
     cur = conn.cursor()
     command = 'SELECT {} FROM {}.{} T WHERE {};'.format(query_name, db['schema'], db['table'], query_condition)
     print command
@@ -89,7 +89,7 @@ def transition_CS(year, component='deck'):
     elif 'sub' in component:
         query_name = 'T.STRUCTURE_NUMBER_008, T.DATE_OF_INSPECT_090, T.SUBSTRUCTURE_COND_060'
     # select specific bridge types
-    query_condition = 'T.STRUCTURE_KIND_043a NOT IN (\'7\', \'8\', \'9\') '
+    query_condition = 'T.STRUCTURE_KIND_043a IN (\'1\', \'2\') AND T.STRUCTURE_TYPE_043b IN (\'01\', \'02\', \'03\', \'04\', \'05\', \'06\') '
     # record type = '1'
     query_condition = query_condition + 'AND T.RECORD_TYPE_005A=\'1\' '
     # data at year
@@ -127,10 +127,10 @@ def transition_CS(year, component='deck'):
         return data0, next_cs_array
 
     data0, next_cs_array = next_condition(data0, data1, data2)
-    data0[data0[:,2]>=8,2]=8
-    data0[data0[:,2]<=1,2]=1
-    next_cs_array[next_cs_array[:]>=8]=8
-    next_cs_array[next_cs_array[:]<=1]=1
+    data0[np.in1d(data0[:,2], ['8', '9']),2]='8'
+    data0[np.in1d(data0[:,2], ['0', '1']),2]='1'
+    next_cs_array[np.in1d(next_cs_array[:], ['8', '9'])]='8'
+    next_cs_array[np.in1d(next_cs_array[:], ['0', '1'])]='1'
     p = np.zeros((8,8))
     for i in xrange(8):
         state_i = 8-i
