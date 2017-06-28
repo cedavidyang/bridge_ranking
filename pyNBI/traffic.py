@@ -223,7 +223,7 @@ def update_links(graph,fail_bridge_db,initial_link_cap,cap_drop_array,parameters
     graph.modify_links_from_lists(to_update_links, delaytype)
 
 def delay_samples(nsmp, graph0, cost0, all_capacity, t, bridge_indx, bridge_db, cs_dist,
-        cap_drop_array, theta, delaytype, correlation=None, nataf=None, corrcoef=0., bookkeeping={}):
+        cap_drop_array, theta, delaytype, correlation=None, nataf=None, corrcoef=0., x0=None, bookkeeping={}):
     # start MC
     bridge_risk_array=[]
     #total_delay_array = []
@@ -248,7 +248,7 @@ def delay_samples(nsmp, graph0, cost0, all_capacity, t, bridge_indx, bridge_db, 
             initial_link_cap = get_initial_capacity(graph, all_capacity, fail_bridges)
             cap_drop_after_fail = cap_drop_array[np.logical_not(bridge_safety_profile.astype(bool))]
             update_links(graph,fail_bridges,initial_link_cap,cap_drop_after_fail,theta,delaytype)
-            res = ue.solver_fw(graph, full=True)
+            res = ue.solver_fw(graph, full=True, x0=x0)
             # save to bookkeeping
             total_delay = res[1][0,0]
             length_vector = np.zeros(len(graph.links.keys()))
