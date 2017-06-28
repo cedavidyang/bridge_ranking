@@ -48,8 +48,8 @@ def Sum_multiple_ODs(ODs_multiple):
     for od in ODs_multiple:
         if od[0]!=od[1]:
             if dict_unique.has_key((od[0], od[1])):
-                dict_unique[(od[0], od[1])] += od[2]/5. #We divide by 5 because peak hour lasts 5 hours
-            else : dict_unique[(od[0], od[1])] = od[2]/5.
+                dict_unique[(od[0], od[1])] += od[2]/2. #We divide by 2 because peak hour lasts 2 hours
+            else : dict_unique[(od[0], od[1])] = od[2]/2.
     for od, value in dict_unique.iteritems():
         ODs_unique.append([od[0], od[1], value])
     return ODs_unique
