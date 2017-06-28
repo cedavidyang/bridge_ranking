@@ -297,7 +297,7 @@ def solver(graph=None, update=False, full=False, data=None, SO=False):
     return linkflows
 
 
-def solver_fw(graph=None, update=False, full=False, data=None, SO=False, e=1e-4, niter=1e4, verbose=False):
+def solver_fw(graph=None, update=False, full=False, data=None, SO=False, e=1e-4, niter=1e4, verbose=False, x0=None):
     """Frank-Wolfe algorithm for UE according to Patriksson (1994)"""
     nnode = len(graph.nodes.keys())
     npair = len(graph.ODs.keys())
@@ -307,7 +307,8 @@ def solver_fw(graph=None, update=False, full=False, data=None, SO=False, e=1e-4,
     # Step 0 (Initialization) Let f0 be a feasible solution to [TAP], LBD=0,
     # e>0, k=0 (using Dijkstra's shortest path algorithm in networkx
     LBD = 0.
-    f = solver_kernal(graph)
+    if x0 is None: f = solver_kernal(graph)
+    else: f = matrix(x0)
     def Tf_func(f):
         linkflows = f
         # linkflows = matrix(0.0, (nlink,1))
