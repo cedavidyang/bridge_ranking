@@ -82,23 +82,23 @@ for link, link_indx in graph0.indlinks.iteritems():
 #bookkeeping = {}
 
 ## correlation
-#corr_length = 8.73
-#correlation = pybridge.bridge_correlation(bridge_db, corr_length)
-#norm_cov = semidefinitive(correlation, tol=1e-14, deftol=1e-12)
-##norm_cov = None
-#
-## with nataf
-#popt = np.load('nataf_popt.npy')
-#def nataf(x):
-#    return natafcurve(x,*popt)
-#nataf=None
-#
-#if nataf is not None:
-#    norm_cov = nataf(correlation)
-#try:
-#    tmp = np.linalg.cholesky(norm_cov)
-#except:
-#    norm_cov = semidefinitive(norm_cov, tol=1e-14, deftol=1e-12)
+corr_length = 8.73
+correlation = pybridge.bridge_correlation(bridge_db, corr_length)
+norm_cov = semidefinitive(correlation, tol=1e-14, deftol=1e-12)
+#norm_cov = None
+
+# with nataf
+popt = np.load('nataf_popt.npy')
+def nataf(x):
+    return natafcurve(x,*popt)
+nataf=None
+
+if nataf is not None:
+    norm_cov = nataf(correlation)
+try:
+    tmp = np.linalg.cholesky(norm_cov)
+except:
+    norm_cov = semidefinitive(norm_cov, tol=1e-14, deftol=1e-12)
 
 filename = os.path.join(os.path.abspath('./'), 'Data', 'Python', 'metadata.out')
 my_shelf = shelve.open(filename,'n') # 'n' for new
