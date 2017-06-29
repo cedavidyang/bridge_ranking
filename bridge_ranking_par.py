@@ -35,13 +35,13 @@ t = 10
 cs_dist = pytraffic.condition_distribution(t, bridge_db, pmatrix)
 cost0 = social_cost(delay0, distance0, t)
 # number of smps
-nsmp = int(1000)
+nsmp = int(10000)
 
 #def loop_over_bridges(bridge_indx, bookkeeping):
 def loop_over_bridges(bridge_indx):
     indx, smp = pytraffic.delay_samples(nsmp, graph0, cost0, all_capacity, t, bridge_indx,
             bridge_db, cs_dist, cap_drop_array, theta, delaytype,
-            correlation=norm_cov, nataf=nataf, corrcoef=0., bookkeeping={})
+            correlation=norm_cov, nataf=nataf, corrcoef=0., x0=res0[0], bookkeeping={})
 
     return indx, smp
 

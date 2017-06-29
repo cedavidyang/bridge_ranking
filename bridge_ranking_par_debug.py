@@ -11,6 +11,7 @@ import sys
 import numpy as np
 import pyNBI.traffic as pytraffic
 from pyNBI.risk import social_cost
+import pyDUE.ue_solver as ue
 
 from multiprocessing import Pool, Manager, freeze_support, Queue, Process
 import Queue as queue
@@ -35,7 +36,7 @@ t = 10
 cs_dist = pytraffic.condition_distribution(t, bridge_db, pmatrix)
 cost0 = social_cost(delay0, distance0, t)
 # number of smps
-nsmp = int(2)
+nsmp = int(5)
 
 #def loop_over_bridges(bridge_indx, bookkeeping):
 def loop_over_bridges(bridge_indx):
@@ -100,6 +101,12 @@ if __name__ == '__main__':
     start_delta_time = time.time()
     print 'CALC: Series version'
     res = map(loop_over_bridges, np.arange(1))
+    delta_time = time.time() - start_delta_time
+    print 'DONE',str(datetime.timedelta(seconds=delta_time))
+    
+    start_delta_time = time.time()
+    print 'CALC: Series version'
+    res0 = ue.solver_fw(graph0, full=True, x0=res0[0])
     delta_time = time.time() - start_delta_time
     print 'DONE',str(datetime.timedelta(seconds=delta_time))
 
