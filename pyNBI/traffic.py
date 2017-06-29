@@ -294,6 +294,58 @@ def delay_history(nsmp, graph, t, bridge_db, cs_dist, cap_drop_array, theta, del
 
     return t, total_delay_array
 
+def flow_samples(nsmp, graph0, cost0, all_capacity, t, bridge_indx, bridge_db, cs_dist,
+        cap_drop_array, theta, delaytype, correlation=None, nataf=None, corrcoef=0., x0=None, bookkeeping={}):
+    # start MC
+    graphs = []
+    graphres = []
+    bridgeCond = []
+    bridge_risk_array=[]
+    #total_delay_array = []
+    for i in xrange(int(nsmp)):
+        bridge_safety_smp, bridge_pfs = generate_bridge_safety(cs_dist, bridge_indx,
+                correlation, nataf, corrcoef)
+        # update link input
+        bridge_safety_profile = np.asarray(bridge_safety_smp,dtype=object)[:,1].astype('int')
+        bridge_safety_profile[bridge_indx] = 0
+        bridgeCond.append(bridge_safety_profile)
+        #if tuple(bridge_safety_profile) in bookkeeping.iterkeys():
+        #multiprocessing.managers.DictProxy has no iterkeys attribute, see http://bugs.python.org/issue9733
+        if tuple(bridge_safety_profile) in iter(bookkeeping.keys()):
+            total_delay = bookkeeping[tuple(bridge_safety_profile)][0]
+            total_distance = bookkeeping[tuple(bridge_safety_profile)][1]
+            cost = social_cost(total_delay, total_distance, t)
+            fail_bridges = bridge_db[np.logical_not(bridge_safety_profile.astype(bool))]
+            bridgecost = bridge_cost(fail_bridges, t)
+            bridge_risk = bridge_pfs[bridge_indx][-1]*(bridgecost+(cost-cost0))
+        else:
+            graph = copy.deepcopy(graph0)
+            fail_bridges = bridge_db[np.logical_not(bridge_safety_profile.astype(bool))]
+            initial_link_cap = get_initial_capacity(graph, all_capacity, fail_bridges)
+            cap_drop_after_fail = cap_drop_array[np.logical_not(bridge_safety_profile.astype(bool))]
+            update_links(graph,fail_bridges,initial_link_cap,cap_drop_after_fail,theta,delaytype)
+            res = ue.solver_fw(graph, full=True, x0=x0)
+            graphs.append(graph)
+            graphres.append(res)
+
+            # save to bookkeeping
+            total_delay = res[1][0,0]
+            length_vector = np.zeros(len(graph.links.keys()))
+            for link_key, link_indx in graph.indlinks.iteritems():
+                length_vector[link_indx] = graph.links[link_key].length
+            total_distance = (res[0].T * matrix(length_vector))[0,0]
+            bookkeeping[tuple(bridge_safety_profile)] = [total_delay, total_distance]
+            cost = social_cost(total_delay, total_distance, t)
+            bridgecost = bridge_cost(fail_bridges, t)
+            bridge_risk = bridge_pfs[bridge_indx][-1]*(bridgecost+(cost-cost0))
+        # add to total delay samples and risk samples
+        #total_delay_array.append(total_delay)
+        bridge_risk_array.append(bridge_risk)
+    #total_delay_array = np.asarray(total_delay_array)
+    bridge_risk_array = np.asarray(bridge_risk_array)
+
+    return bridge_indx, bridge_risk_array, graphs, graphres, bridgeCond
+
 if __name__ == '__main__':
     import matplotlib.pyplot as plt
     plt.ion()
