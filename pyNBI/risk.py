@@ -7,7 +7,7 @@ def compute_cost(bridge_db, total_delay, total_distance, t):
     CAR_OCCUPY = 1.5        # average vehicle occupancies for cars
     TRUCK_OCCUPY = 1.05     # average vehicle occupancies for trucks
     CAR_WAGE = 22.82        # average wage of car drivers, USD/h
-    DISCOUNT_RATE = 0.02    # discount rate
+    DISCOUNT_RATE = 0.00    # discount rate
     REBUILD_COST = 894      # rebuild cost, USD/m2
     CAR_RUN_COST = 0.08     # running cost for cars, USD/km
     TRUCK_RUN_COST = 0.375  # running cost for trucks, USD/km
@@ -26,7 +26,7 @@ def compute_cost(bridge_db, total_delay, total_distance, t):
 
 def bridge_cost(bridge_db, t):
     """compute bridge cost according to Saydam and Frangopol (2011)"""
-    DISCOUNT_RATE = 0.02    # discount rate
+    DISCOUNT_RATE = 0.00    # discount rate
     REBUILD_COST = 894      # rebuild cost, USD/m2
     total_cost = 0.
     for (name, lat, long, length, width, deck_cs0, super_cs0, sub_cs0, detour, onlink) in bridge_db:
@@ -43,7 +43,7 @@ def social_cost(total_delay, total_distance, t):
     CAR_OCCUPY = 1.5        # average vehicle occupancies for cars
     TRUCK_OCCUPY = 1.05     # average vehicle occupancies for trucks
     CAR_WAGE = 22.82        # average wage of car drivers, USD/h
-    DISCOUNT_RATE = 0.02    # discount rate
+    DISCOUNT_RATE = 0.00    # discount rate
     CAR_RUN_COST = 0.08     # running cost for cars, USD/km
     TRUCK_RUN_COST = 0.375  # running cost for trucks, USD/km
     CARGO_VALUE = 4.        # time value of a cargo
