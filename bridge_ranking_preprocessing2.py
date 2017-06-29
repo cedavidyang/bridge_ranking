@@ -47,6 +47,13 @@ cur_nbi = conn_nbi.cursor()
 
 # retrieve initial condition states of bridges
 bridge_db = pytraffic.retrieve_bridge_db(cur_gis, cur_nbi)
+onlinks = [[(15,16,1), (16,14,1)], [(24,25,1), (25,24,1)], [(24,25,1), (25,24,1)], [(24,27,1),(27,24,1)],
+           [(8,22,1), (22,8,1)], [(37,38,1), (38,37,1)], [(30,37,1), (37,30,1)], [(30,37,1), (37,30,1)],
+           [(30,37,1), (37,30,1)], [(22,30,1), (30,22,1)], [(22,23,1), (23,22,1)], [(22,23,1), (23,22,1)],
+           [(22,23,1), (23,22,1)], [(33,36,1), (36,33,1)], [(29,33,1), (33,29,1)], [(29,26,1), (26,29,1)],
+           [(29,26,1), (26,29,1)], [(13,14,1), (14,13,1)], [(12,13,1), (13,12,1)], [(13,14,1), (14,13,1)]]
+for bridge,onlink in zip(bridge_db,onlinks):
+    bridge[-1] = onlink
 # get transition matrix
 if os.path.isfile('./pmatrix.npy'):
     pmatrix = np.load('pmatrix.npy')
