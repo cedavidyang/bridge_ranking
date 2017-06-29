@@ -26,6 +26,8 @@ import itertools
 import time
 import datetime
 
+import shelve
+
 # load existing metadata
 filename = os.path.join(os.path.abspath('./'), 'Data', 'Python', 'metadata.out')
 my_shelf = shelve.open(filename, 'r')
@@ -98,7 +100,6 @@ for link, link_indx in graph0.indlinks.iteritems():
 #except:
 #    norm_cov = semidefinitive(norm_cov, tol=1e-14, deftol=1e-12)
 
-import shelve
 filename = os.path.join(os.path.abspath('./'), 'Data', 'Python', 'metadata.out')
 my_shelf = shelve.open(filename,'n') # 'n' for new
 keys = ['bridge_db', 'all_capacity', 'cap_drop_array', 'res0', 'length_vector', 'pmatrix', 'theta',
