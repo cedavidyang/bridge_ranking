@@ -62,7 +62,7 @@ conn_gis.close()
 conn_nbi.close()
 
 # capacity drop
-cap_drop_array = np.ones(np.asarray(bridge_db, dtype=object).shape[0])*0.1
+cap_drop_array = np.ones(np.asarray(bridge_db, dtype=object).shape[0])*0.5
 
 # initial capacity without failed bridges
 all_capacity = np.zeros(nlink)
