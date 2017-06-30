@@ -170,14 +170,15 @@ def postpfvsdist(year, checkname):
         tmp = abs(pf0-pf1)
         pfchange.append(tmp)
 
-    res = np.vstack((distance,pfchange)).T
-    res = res[res[:,0].argsort()]
+    resunsorted = np.vstack((distance,pfchange)).T
+    res = resunsorted[resunsorted[:,0].argsort()]
     # plt.plot(res[1:,0], res[1:,1], 'o')
     # plt.xlabel('Distance to bridge 53 0134 (km)')
     # plt.ylabel('Change of failure probability, $p_f\'-pf$')
 
     import scipy.io as sio
-    sio.savemat('./figs/pfchange_'+checkname[-4:]+'.mat', {'res':res})
+    sio.savemat('./figs/pfchange_'+checkname[-4:]+'.mat',
+            {'res':res, 'unsorted':resunsorted})
 
     return locals()
 
