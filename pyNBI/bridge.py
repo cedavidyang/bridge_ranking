@@ -9,7 +9,7 @@ __author__ = 'cedavidyang'
 import psycopg2
 import numpy as np
 import matplotlib.pyplot as plt
-from pyDUE.util import distance_on_unit_sphere
+from pyDUE.util import distance_on_unit_sphere, int_to_degree
 
 def select_data(db, query_name, query_condition):
     """ get deck condition state data according to query dictionary """
@@ -172,11 +172,6 @@ def transition_matrix(years, component='deck'):
 
 
 def bridge_correlation(bridge_db, corr_length):
-    def int_to_degree(int_value):
-        degree = np.floor(int_value/1e6)
-        minute = np.floor((int_value - int(1e6)*degree)/1e4)
-        second = int_value % int(1e4) / 100.
-        return degree+minute/60.+second/3600.
     corr = np.ones((len(bridge_db),len(bridge_db)))
     for i_indx, bridge_i in enumerate(bridge_db):
         lati = int_to_degree(bridge_i[1])
