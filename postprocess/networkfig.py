@@ -25,7 +25,7 @@ pgf_with_custom_preamble = {
 mpl.rcParams.update(pgf_with_custom_preamble)
 import matplotlib.pyplot as plt
 plt.ion()
-from mpldatacursor import datacursor
+# from mpldatacursor import datacursor
 
 def CSprobdevelopment():
     # cs evolution
@@ -132,11 +132,10 @@ def nataftest():
     plt.ylabel('Adjusted correlation $\\rho\'$')
 
 
-def postpfvsdist(year):
+def postpfvsdist(year, checkname):
     import shelve
     import pyNBI.traffic as pytraffic
-    from pyDUE.util import distance_on_unit_sphere
-    from pyNBI.bridge import int_to_degree
+    from pyDUE.util import distance_on_unit_sphere, int_to_degree
     # year of interest
     t = year
     # to restore workspace import global variables
@@ -150,7 +149,7 @@ def postpfvsdist(year):
     cs_dist = pytraffic.condition_distribution(t, bridge_db, pmatrix)
     corrcoef = 0.
     bridge_name = np.asarray(bridge_db, dtype=object)[:,0].astype(str)
-    bridge_indx = np.where(np.core.defchararray.rfind(bridge_name, '53 1304')==6)[0][0]
+    bridge_indx = np.where(np.core.defchararray.rfind(bridge_name, checkname)==6)[0][0]
     bridge_safety_smp, bridge_pfs0 = pytraffic.generate_bridge_safety(cs_dist,
             bridge_indx=None, correlation=norm_cov, nataf=nataf, corrcoef=corrcoef)
     bridge_safety_smp, bridge_pfs = pytraffic.generate_bridge_safety(cs_dist,
@@ -173,9 +172,14 @@ def postpfvsdist(year):
 
     res = np.vstack((distance,pfchange)).T
     res = res[res[:,0].argsort()]
-    plt.plot(res[1:,0], res[1:,1], 'o')
-    plt.xlabel('Distance to bridge 53 0134 (km)')
-    plt.ylabel('Change of failure probability, $p_f\'-pf$')
+    # plt.plot(res[1:,0], res[1:,1], 'o')
+    # plt.xlabel('Distance to bridge 53 0134 (km)')
+    # plt.ylabel('Change of failure probability, $p_f\'-pf$')
+
+    import scipy.io as sio
+    sio.savemat('./figs/pfchange_'+checkname[-4:]+'.mat', {'res':res})
+
+    return locals()
 
 
 def mc_convergence(subfig=False):
@@ -237,3 +241,6 @@ def mc_convergence(subfig=False):
         plt.xlabel('Number of samples')
         plt.ylim((0, 100e6))
         plt.ylabel('Risk of bridge failures')
+
+if __name__ == '__main__':
+    results = postpfvsdist(0, '53 1176')
