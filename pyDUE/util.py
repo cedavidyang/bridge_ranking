@@ -11,6 +11,11 @@ import numpy.random as ra
 import networkx as nx
 import math
 
+def int_to_degree(int_value):
+    degree = np.floor(int_value/1e6)
+    minute = np.floor((int_value - int(1e6)*degree)/1e4)
+    second = int_value % int(1e4) / 100.
+    return degree+minute/60.+second/3600.
 
 def place_zeros(M, tol=1e-13):
     """Replace entries in M less than tol by 0.0"""
