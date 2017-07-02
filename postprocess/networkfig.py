@@ -85,6 +85,8 @@ def CSdevelopment(life=100, intl=2, struct='super'):
             plt.fill_between(service_life, cscum, y2=lastcscum, facecolor=cmap(fc), label='Condition rating {}'.format(cs+1))
             lgdrec.append(plt.Rectangle((0, 0), 1, 1, fc=cmap(fc), label='Condition rating {}'.format(cs+1)))
         cs -= 1
+    import scipy.io as sio
+    sio.savemat('csPostprocess.mat', {'cs': cs_array, 'life':service_life})
     plt.xlabel('Service time (year)', fontsize=FONT_SIZE)
     plt.ylabel('Probability')
     plt.xlim([0, life])
