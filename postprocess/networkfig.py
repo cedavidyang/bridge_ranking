@@ -16,7 +16,7 @@ pgf_with_custom_preamble = {
     "font.family": "serif", # use serif/main font for text elements
     "font.size": FONT_SIZE, # use font size
     "text.usetex": True,    # use inline math for ticks
-    #'text.latex.unicode': True,
+    'text.latex.unicode': True,
     #"pgf.rcfonts": False,   # don't setup fonts from rc parameters
     #"pgf.preamble": [
         #r'\usepackage{fontspec}',         # load additional packages
@@ -86,7 +86,8 @@ def CSdevelopment(life=100, intl=2, struct='super'):
             lgdrec.append(plt.Rectangle((0, 0), 1, 1, fc=cmap(fc), label='Condition rating {}'.format(cs+1)))
         cs -= 1
     import scipy.io as sio
-    sio.savemat('csPostprocess.mat', {'cs': cs_array, 'life':service_life})
+    sio.savemat('csPostprocess.mat', {'cs': cs_array, 'life':service_life, 'pmatrix':pmatrix})
+
     plt.xlabel('Service time (year)', fontsize=FONT_SIZE)
     plt.ylabel('Probability')
     plt.xlim([0, life])
