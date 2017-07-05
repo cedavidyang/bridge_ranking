@@ -29,9 +29,9 @@ import datetime
 # global variables for parallel computing... stupid multiprocessing in Python
 
 # open databases
-conn_gis = psycopg2.connect("dbname='gisdatabase' user='amadeus' host='localhost' password='19881229'")
+conn_gis = psycopg2.connect("dbname='gisdatabase' user='postgres' host='localhost' password=''")
 cur_gis = conn_gis.cursor()
-conn_nbi = psycopg2.connect("dbname='nbi' user='amadeus' host='localhost' password='19881229'")
+conn_nbi = psycopg2.connect("dbname='nbi' user='postgres' host='localhost' password=''")
 cur_nbi = conn_nbi.cursor()
 
 # retrieve initial condition states of bridges
