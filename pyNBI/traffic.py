@@ -226,6 +226,8 @@ def delay_samples(nsmp, graph0, cost0, all_capacity, t, bridge_indx, bridge_db, 
         cap_drop_array, theta, delaytype, correlation=None, nataf=None, corrcoef=0., x0=None, bookkeeping={}):
     # start MC
     bridge_risk_array=[]
+    # eccostlog = []
+    # socostlog = []
     #total_delay_array = []
     for i in xrange(int(nsmp)):
         bridge_safety_smp, bridge_pfs = generate_bridge_safety(cs_dist, bridge_indx,
@@ -262,6 +264,8 @@ def delay_samples(nsmp, graph0, cost0, all_capacity, t, bridge_indx, bridge_db, 
         # add to total delay samples and risk samples
         #total_delay_array.append(total_delay)
         bridge_risk_array.append(bridge_risk)
+        # eccostlog.append(bridgecost)
+        # socostlog.append(cost-cost0)
     #total_delay_array = np.asarray(total_delay_array)
     bridge_risk_array = np.asarray(bridge_risk_array)
 
